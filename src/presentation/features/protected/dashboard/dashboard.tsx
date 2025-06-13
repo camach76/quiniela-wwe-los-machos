@@ -4,6 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import clubes from "@/data/clubes_mundial.json";
+import { useUserSession } from "@/presentation/hooks/useUserSession";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { useLogout } from "@/presentation/features/auth/logout/hooks/useLogout";
+import { toast } from "react-hot-toast";
 import {
   FaFutbol,
   FaTable,
@@ -22,7 +26,50 @@ interface Club {
 }
 
 export default function Dashboard() {
-  const userName = "Usuario";
+  const { user, loading: loadingUser } = useUserSession();
+  const { mutate: logout, isPending: isLoggingOut } = useLogout();
+  const supabase = createClientComponentClient();
+  const [userName, setUserName] = useState("Usuario");
+
+  const handleLogout = () => {
+    logout(undefined, {
+      onSuccess: () => {
+        toast.success("Sesión cerrada correctamente");
+      },
+      onError: () => {
+        toast.error("Error al cerrar sesión");
+      }
+    });
+  };
+
+  // Obtener el nombre del usuario
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (user?.id) {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('username')
+            .eq('id', user.id)
+            .single();
+
+          if (data?.username) {
+            setUserName(data.username);
+          } else if (user.email) {
+            // Usar el nombre de usuario del email si no hay username
+            setUserName(user.email.split('@')[0]);
+          }
+        } catch (error) {
+          console.error("Error al cargar el perfil del usuario:", error);
+          if (user.email) {
+            setUserName(user.email.split('@')[0]);
+          }
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [user, supabase]);
   const [activeTab, setActiveTab] = useState("proximos");
   const [topJugadores, setTopJugadores] = useState<Array<{
     id: string;
@@ -40,9 +87,8 @@ export default function Dashboard() {
       try {
         setLoading(true);
         
-        // Obtener el ID del usuario actual (puedes obtenerlo de tu sistema de autenticación)
-        // Por ahora, usaremos un valor fijo o de la sesión
-        const userId = 'usuario-actual-id'; // Reemplaza esto con el ID real del usuario
+        // Usar el ID del usuario autenticado
+        const userId = user?.id || 'anonymous';
         
         const res = await fetch(`/api/ranking?userId=${encodeURIComponent(userId)}`, {
           credentials: "include",
@@ -241,9 +287,15 @@ export default function Dashboard() {
             </div>
             <span className="text-gray-700 font-medium">Hola, {userName}</span>
           </div>
-          <button className="flex items-center gap-2 text-red-500 hover:text-red-700 font-medium transition-colors">
+          <button 
+            onClick={handleLogout}
+            disabled={isLoggingOut || loadingUser}
+            className="flex items-center gap-2 text-red-500 hover:text-red-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             <FaSignOutAlt />
-            <span className="hidden sm:inline">Salir</span>
+            <span className="hidden sm:inline">
+              {isLoggingOut ? 'Saliendo...' : 'Salir'}
+            </span>
           </button>
         </div>
       </nav>
