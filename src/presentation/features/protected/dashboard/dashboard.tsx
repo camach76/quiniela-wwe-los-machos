@@ -8,16 +8,7 @@ import { useUserSession } from "@/presentation/hooks/useUserSession";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useLogout } from "@/presentation/features/auth/logout/hooks/useLogout";
 import { toast } from "react-hot-toast";
-import {
-  FaFutbol,
-  FaTable,
-  FaUser,
-  FaSignOutAlt,
-  FaListOl,
-  FaBell,
-  FaTrophy,
-  FaCalendarAlt,
-} from "react-icons/fa";
+import { FaFutbol, FaTable, FaUser, FaSignOutAlt, FaListOl, FaBell, FaTrophy, FaCalendarAlt } from "react-icons/fa";
 
 interface Club {
   nombre: string;
