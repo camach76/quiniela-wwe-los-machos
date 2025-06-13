@@ -1,5 +1,5 @@
-import { User } from "@/backend/core/domain/entities/User";
+import { UserEntity } from "@/backend/core/domain/entities/UserEntity";
 
 export interface AuthRepository {
-  register(email: string, password: string): Promise<User>;
+  register(email: string, password: string): Promise<UserEntity>;
 }

@@ -1,206 +1,101 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
-  FaSignOutAlt,
   FaBell,
-  FaSearch,
-  FaTrophy,
-  FaChevronUp,
-  FaChevronDown,
   FaFilter,
+  FaSearch,
+  FaSignOutAlt,
+  FaTrophy,
 } from "react-icons/fa";
 
-export default function Ranking() {
-  const userName = "Usuario";
+type RankingJugador = {
+  id: string;
+  nombre: string;
+  puntos: number;
+  aciertos: number;
+  total: number;
+  precision: number;
+  racha: number;
+  avatar: string;
+  esUsuario: boolean;
+};
+
+export default function RankingPage() {
+  const [jugadores, setJugadores] = useState<RankingJugador[]>([]);
+  const [filteredJugadores, setFilteredJugadores] = useState<RankingJugador[]>(
+    [],
+  );
   const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState("puntos");
-  const [sortDirection, setSortDirection] = useState("desc");
+  const [sortBy, setSortBy] = useState<
+    "puntos" | "precision" | "aciertos" | "racha"
+  >("puntos");
   const [showFilters, setShowFilters] = useState(false);
-  const jugadores = [
-    {
-      id: 1,
-      nombre: "Carlos Rodríguez",
-      puntos: 156,
-      aciertos: 18,
-      total: 22,
-      precision: 82,
-      racha: 5,
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: 2,
-      nombre: "María López",
-      puntos: 142,
-      aciertos: 16,
-      total: 22,
-      precision: 73,
-      racha: 3,
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: 3,
-      nombre: "Juan Pérez",
-      puntos: 138,
-      aciertos: 15,
-      total: 21,
-      precision: 71,
-      racha: 0,
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: 4,
-      nombre: "Ana Sánchez",
-      puntos: 135,
-      aciertos: 15,
-      total: 22,
-      precision: 68,
-      racha: 2,
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: 5,
-      nombre: "Roberto Gómez",
-      puntos: 132,
-      aciertos: 14,
-      total: 20,
-      precision: 70,
-      racha: 0,
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: 6,
-      nombre: "Laura Martínez",
-      puntos: 130,
-      aciertos: 14,
-      total: 22,
-      precision: 64,
-      racha: 1,
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: 7,
-      nombre: "Miguel Fernández",
-      puntos: 128,
-      aciertos: 14,
-      total: 21,
-      precision: 67,
-      racha: 0,
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: 8,
-      nombre: "Usuario",
-      puntos: 125,
-      aciertos: 12,
-      total: 20,
-      precision: 60,
-      racha: 2,
-      avatar: "/placeholder.svg?height=40&width=40",
-      esUsuario: true,
-    },
-    {
-      id: 9,
-      nombre: "Patricia Díaz",
-      puntos: 120,
-      aciertos: 13,
-      total: 22,
-      precision: 59,
-      racha: 0,
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: 10,
-      nombre: "Fernando Torres",
-      puntos: 118,
-      aciertos: 12,
-      total: 21,
-      precision: 57,
-      racha: 1,
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: 11,
-      nombre: "Lucía Gutiérrez",
-      puntos: 115,
-      aciertos: 12,
-      total: 22,
-      precision: 55,
-      racha: 0,
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-    {
-      id: 12,
-      nombre: "Javier Ruiz",
-      puntos: 110,
-      aciertos: 11,
-      total: 20,
-      precision: 55,
-      racha: 0,
-      avatar: "/placeholder.svg?height=40&width=40",
-    },
-  ];
 
-  // Filtrar y ordenar jugadores
-  const filteredJugadores = jugadores
-    .filter((jugador) =>
-      jugador.nombre.toLowerCase().includes(searchTerm.toLowerCase()),
-    )
-    .sort((a, b) => {
-      const direction = sortDirection === "asc" ? 1 : -1;
+  const userName = jugadores.find((j) => j.esUsuario)?.nombre || "Usuario";
 
-      switch (sortBy) {
-        case "puntos":
-          return (a.puntos - b.puntos) * direction;
-        case "precision":
-          return (a.precision - b.precision) * direction;
-        case "aciertos":
-          return (a.aciertos - b.aciertos) * direction;
-        case "racha":
-          return (a.racha - b.racha) * direction;
-        default:
-          return 0;
+  useEffect(() => {
+    const fetchRanking = async () => {
+      try {
+        const res = await fetch("/api/ranking", {
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error("Error en /api/ranking:", res.status, errorText);
+          return;
+        }
+
+        const data: RankingJugador[] = await res.json();
+        setJugadores(data);
+      } catch (error) {
+        console.error("Error de red en /api/ranking:", error);
       }
-    });
+    };
 
-  // Función para cambiar el orden
-  const handleSort = (column) => {
-    if (sortBy === column) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortBy(column);
-      setSortDirection("desc");
+    fetchRanking();
+  }, []);
+
+  useEffect(() => {
+    let filtered = [...jugadores];
+
+    if (searchTerm) {
+      filtered = filtered.filter((j) =>
+        j.nombre.toLowerCase().includes(searchTerm.toLowerCase()),
+      );
     }
+
+    filtered.sort((a, b) => b[sortBy] - a[sortBy]);
+
+    setFilteredJugadores(filtered);
+  }, [jugadores, searchTerm, sortBy]);
+
+  const handleSort = (key: typeof sortBy) => {
+    setSortBy(key);
   };
 
-  // Renderizar flecha de ordenación
-  const renderSortArrow = (column) => {
-    if (sortBy !== column) return null;
-    return sortDirection === "asc" ? (
-      <FaChevronUp className="ml-1 inline" />
-    ) : (
-      <FaChevronDown className="ml-1 inline" />
-    );
+  const renderSortArrow = (key: typeof sortBy) => {
+    return sortBy === key ? "⬇️" : "";
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-100">
-      {/* Navbar */}
       <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-10 flex items-center justify-between px-4 lg:px-6 py-4">
         <div className="flex items-center gap-3">
           <Link href="/dashboard" className="flex items-center gap-3">
             <div className="relative w-10 h-10">
               <Image
-                src="/logo-mundial.png"
+                src="/images/logo.png"
                 alt="Logo"
                 fill
                 className="object-contain"
               />
             </div>
             <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">
-              Quinela Mundial de Clubes
+              Quinela Los Machos
             </span>
           </Link>
         </div>
@@ -222,9 +117,7 @@ export default function Ranking() {
         </div>
       </nav>
 
-      {/* Contenido principal */}
       <main className="w-full px-4 lg:px-6 py-6">
-        {/* Encabezado */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -257,55 +150,27 @@ export default function Ranking() {
           </div>
         </div>
 
-        {/* Filtros adicionales (opcional) */}
         {showFilters && (
           <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-sm p-4 mb-6 border border-white/20">
             <div className="flex flex-wrap gap-3">
-              <button
-                onClick={() => handleSort("puntos")}
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  sortBy === "puntos"
-                    ? "bg-blue-100 text-blue-700"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                Puntos {renderSortArrow("puntos")}
-              </button>
-              <button
-                onClick={() => handleSort("precision")}
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  sortBy === "precision"
-                    ? "bg-blue-100 text-blue-700"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                Precisión {renderSortArrow("precision")}
-              </button>
-              <button
-                onClick={() => handleSort("aciertos")}
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  sortBy === "aciertos"
-                    ? "bg-blue-100 text-blue-700"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                Aciertos {renderSortArrow("aciertos")}
-              </button>
-              <button
-                onClick={() => handleSort("racha")}
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  sortBy === "racha"
-                    ? "bg-blue-100 text-blue-700"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                Racha {renderSortArrow("racha")}
-              </button>
+              {["puntos", "precision", "aciertos", "racha"].map((key) => (
+                <button
+                  key={key}
+                  onClick={() => handleSort(key as typeof sortBy)}
+                  className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    sortBy === key
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {key.charAt(0).toUpperCase() + key.slice(1)}{" "}
+                  {renderSortArrow(key as typeof sortBy)}
+                </button>
+              ))}
             </div>
           </div>
         )}
 
-        {/* Tabla de ranking */}
         <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-md border border-white/20 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -317,37 +182,17 @@ export default function Ranking() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Jugador
                   </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => handleSort("puntos")}
-                  >
-                    <div className="flex items-center">
-                      Puntos {renderSortArrow("puntos")}
-                    </div>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Puntos
                   </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => handleSort("precision")}
-                  >
-                    <div className="flex items-center">
-                      Precisión {renderSortArrow("precision")}
-                    </div>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Precisión
                   </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => handleSort("aciertos")}
-                  >
-                    <div className="flex items-center">
-                      Aciertos {renderSortArrow("aciertos")}
-                    </div>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Aciertos
                   </th>
-                  <th
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                    onClick={() => handleSort("racha")}
-                  >
-                    <div className="flex items-center">
-                      Racha {renderSortArrow("racha")}
-                    </div>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Racha
                   </th>
                 </tr>
               </thead>
@@ -361,7 +206,7 @@ export default function Ranking() {
                         : "hover:bg-gray-50"
                     } transition-colors`}
                   >
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4">
                       <div
                         className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${
                           index === 0
@@ -376,58 +221,37 @@ export default function Ranking() {
                         {index + 1}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10 relative">
-                          <div
-                            className={`absolute inset-0 rounded-full ${jugador.esUsuario ? "bg-blue-100" : "bg-gray-100"}`}
-                          ></div>
-                          <Image
-                            src={jugador.avatar || "/placeholder.svg"}
-                            alt={jugador.nombre}
-                            width={40}
-                            height={40}
-                            className="rounded-full object-cover"
-                          />
+                    <td className="px-6 py-4 flex items-center gap-3">
+                      <Image
+                        src={jugador.avatar || "/placeholder.svg"}
+                        alt={jugador.nombre}
+                        width={40}
+                        height={40}
+                        className="rounded-full object-cover"
+                      />
+                      <div>
+                        <div
+                          className={`text-sm font-medium ${
+                            jugador.esUsuario
+                              ? "text-blue-700"
+                              : "text-gray-900"
+                          }`}
+                        >
+                          {jugador.nombre}
                         </div>
-                        <div className="ml-4">
-                          <div
-                            className={`text-sm font-medium ${jugador.esUsuario ? "text-blue-700" : "text-gray-900"}`}
-                          >
-                            {jugador.nombre}
-                          </div>
-                          {jugador.esUsuario && (
-                            <div className="text-xs text-blue-500">Tú</div>
-                          )}
-                        </div>
+                        {jugador.esUsuario && (
+                          <div className="text-xs text-blue-500">Tú</div>
+                        )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-bold text-gray-900">
-                        {jugador.puntos}
-                      </div>
+                    <td className="px-6 py-4 font-bold">{jugador.puntos}</td>
+                    <td className="px-6 py-4">{jugador.precision}%</td>
+                    <td className="px-6 py-4">
+                      {jugador.aciertos}/{jugador.total}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="w-16 bg-gray-200 rounded-full h-2.5 mr-2">
-                          <div
-                            className="bg-blue-600 h-2.5 rounded-full"
-                            style={{ width: `${jugador.precision}%` }}
-                          ></div>
-                        </div>
-                        <span className="text-sm text-gray-900">
-                          {jugador.precision}%
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
-                        {jugador.aciertos}/{jugador.total}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    <td className="px-6 py-4">
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full ${
                           jugador.racha > 0
                             ? "bg-green-100 text-green-800"
                             : "bg-gray-100 text-gray-800"
@@ -436,20 +260,16 @@ export default function Ranking() {
                         {jugador.racha > 0
                           ? `${jugador.racha} aciertos seguidos`
                           : "Sin racha"}
-                      </div>
+                      </span>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-
-          {/* Si no hay resultados */}
           {filteredJugadores.length === 0 && (
-            <div className="text-center py-10">
-              <p className="text-gray-500">
-                No se encontraron jugadores con ese nombre
-              </p>
+            <div className="text-center py-10 text-gray-500">
+              No se encontraron jugadores con ese nombre
             </div>
           )}
         </div>

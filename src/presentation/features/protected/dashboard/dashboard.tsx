@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
+import clubes from "@/data/clubes_mundial.json";
 import {
   FaFutbol,
   FaTable,
@@ -14,9 +15,23 @@ import {
   FaCalendarAlt,
 } from "react-icons/fa";
 
+interface Club {
+  nombre: string;
+  pais: string;
+  logo: string;
+}
+
 export default function Dashboard() {
   const userName = "Usuario";
   const [activeTab, setActiveTab] = useState("proximos");
+
+  // Función para obtener el logo de un equipo por su nombre
+  const obtenerLogoEquipo = (nombreEquipo: string): string => {
+    const equipo = clubes.find(
+      (club: Club) => club.nombre.toLowerCase() === nombreEquipo.toLowerCase(),
+    );
+    return equipo ? equipo.logo : "/placeholder.svg?height=40&width=40";
+  };
 
   // Datos de ejemplo para partidos próximos
   const proximosPartidos = [
@@ -24,12 +39,12 @@ export default function Dashboard() {
       id: 1,
       local: {
         nombre: "Barcelona",
-        logo: "/placeholder.svg?height=40&width=40",
+        logo: obtenerLogoEquipo("Barcelona"),
         color: "#004D98",
       },
       visitante: {
         nombre: "Real Madrid",
-        logo: "/placeholder.svg?height=40&width=40",
+        logo: obtenerLogoEquipo("Real Madrid"),
         color: "#FFFFFF",
       },
       fecha: "15 Jun",
@@ -40,13 +55,13 @@ export default function Dashboard() {
     {
       id: 2,
       local: {
-        nombre: "Man City",
-        logo: "/placeholder.svg?height=40&width=40",
+        nombre: "Manchester City",
+        logo: obtenerLogoEquipo("Manchester City"),
         color: "#6CABDD",
       },
       visitante: {
         nombre: "Liverpool",
-        logo: "/placeholder.svg?height=40&width=40",
+        logo: obtenerLogoEquipo("Liverpool"),
         color: "#C8102E",
       },
       fecha: "18 Jun",
@@ -57,13 +72,13 @@ export default function Dashboard() {
     {
       id: 3,
       local: {
-        nombre: "Bayern",
-        logo: "/placeholder.svg?height=40&width=40",
+        nombre: "Bayern Munich",
+        logo: obtenerLogoEquipo("Bayern Munich"),
         color: "#DC052D",
       },
       visitante: {
-        nombre: "Dortmund",
-        logo: "/placeholder.svg?height=40&width=40",
+        nombre: "Borussia Dortmund",
+        logo: obtenerLogoEquipo("Borussia Dortmund"),
         color: "#FDE100",
       },
       fecha: "20 Jun",
@@ -78,14 +93,14 @@ export default function Dashboard() {
     {
       id: 4,
       local: {
-        nombre: "PSG",
-        logo: "/placeholder.svg?height=40&width=40",
+        nombre: "Paris Saint-Germain",
+        logo: obtenerLogoEquipo("Paris Saint-Germain"),
         color: "#004170",
         goles: 2,
       },
       visitante: {
         nombre: "Marseille",
-        logo: "/placeholder.svg?height=40&width=40",
+        logo: obtenerLogoEquipo("Marseille"),
         color: "#2B63AD",
         goles: 1,
       },
@@ -116,19 +131,19 @@ export default function Dashboard() {
     {
       id: 6,
       local: {
-        nombre: "Ajax",
-        logo: "/placeholder.svg?height=40&width=40",
-        color: "#C8102E",
+        nombre: "Chelsea",
+        logo: obtenerLogoEquipo("Chelsea"),
+        color: "#034694",
         goles: 1,
       },
       visitante: {
-        nombre: "PSV",
-        logo: "/placeholder.svg?height=40&width=40",
-        color: "#FF0000",
-        goles: 1,
+        nombre: "Arsenal",
+        logo: obtenerLogoEquipo("Arsenal"),
+        color: "#EF0107",
+        goles: 2,
       },
       fecha: "5 Jun",
-      competicion: "Eredivisie",
+      competicion: "Premier League",
       tuPronostico: { local: 2, visitante: 1 },
       puntos: 0,
     },
@@ -149,14 +164,14 @@ export default function Dashboard() {
         <div className="flex items-center gap-3">
           <div className="relative w-10 h-10">
             <Image
-              src="/logo-mundial.png"
+              src="/images/logo.png"
               alt="Logo"
               fill
               className="object-contain"
             />
           </div>
           <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">
-            Quinela Mundial de Clubes
+            Quinela Los Machos
           </span>
         </div>
         <div className="flex items-center gap-4">
@@ -308,47 +323,39 @@ export default function Dashboard() {
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="relative w-10 h-10 flex-shrink-0">
-                              <div
-                                className="absolute inset-0 rounded-full"
-                                style={{ backgroundColor: partido.local.color }}
-                              ></div>
-                              <Image
-                                src={partido.local.logo || "/placeholder.svg"}
-                                alt={partido.local.nombre}
-                                width={40}
-                                height={40}
-                                className="object-contain"
-                              />
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 flex-1 justify-end">
+                              <div className="w-10 h-10 flex items-center justify-center">
+                                <Image
+                                  className="object-contain"
+                                  src={partido.local.logo || "/placeholder.svg"}
+                                  alt={partido.local.nombre}
+                                  width={40}
+                                  height={40}
+                                />
+                              </div>
+                              <span className="font-medium text-right">
+                                {partido.local.nombre}
+                              </span>
                             </div>
-                            <span className="font-medium">
-                              {partido.local.nombre}
+                            <span className="text-xs font-bold bg-gray-100 px-2 py-1 rounded">
+                              VS
                             </span>
-                          </div>
-                          <span className="text-xs font-bold bg-gray-100 px-2 py-1 rounded">
-                            VS
-                          </span>
-                          <div className="flex items-center gap-3">
-                            <span className="font-medium">
-                              {partido.visitante.nombre}
-                            </span>
-                            <div className="relative w-10 h-10 flex-shrink-0">
-                              <div
-                                className="absolute inset-0 rounded-full"
-                                style={{
-                                  backgroundColor: partido.visitante.color,
-                                }}
-                              ></div>
-                              <Image
-                                src={
-                                  partido.visitante.logo || "/placeholder.svg"
-                                }
-                                alt={partido.visitante.nombre}
-                                width={40}
-                                height={40}
-                                className="object-contain"
-                              />
+                            <div className="flex items-center gap-3 flex-1">
+                              <span className="font-medium">
+                                {partido.visitante.nombre}
+                              </span>
+                              <div className="w-10 h-10 flex items-center justify-center">
+                                <Image
+                                  className="object-contain"
+                                  src={
+                                    partido.visitante.logo || "/placeholder.svg"
+                                  }
+                                  alt={partido.visitante.nombre}
+                                  width={40}
+                                  height={40}
+                                />
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -384,56 +391,81 @@ export default function Dashboard() {
                           </span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="relative w-10 h-10 flex-shrink-0">
-                              <div
-                                className="absolute inset-0 rounded-full"
-                                style={{ backgroundColor: partido.local.color }}
-                              ></div>
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 flex-1 justify-end">
+                              <div className="w-10 h-10 flex items-center justify-center">
+                                <Image
+                                  className="object-contain"
+                                  src={partido.local.logo || "/placeholder.svg"}
+                                  alt={partido.local.nombre}
+                                  width={40}
+                                  height={40}
+                                />
+                              </div>
+                              <span className="font-medium text-right">
+                                {partido.local.nombre}
+                              </span>
+                            </div>
+                            <span className="text-xs font-bold bg-gray-100 px-2 py-1 rounded">
+                              VS
+                            </span>
+                            <div className="flex items-center gap-3 flex-1">
+                              <span className="font-medium">
+                                {partido.visitante.nombre}
+                              </span>
+                              <div className="w-10 h-10 flex items-center justify-center">
+                                <Image
+                                  className="object-contain"
+                                  src={
+                                    partido.visitante.logo || "/placeholder.svg"
+                                  }
+                                  alt={partido.visitante.nombre}
+                                  width={40}
+                                  height={40}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3 flex-1 justify-end">
+                            <div className="text-right">
+                              <p className="font-medium">
+                                {partido.local.nombre}
+                              </p>
+                              <p className="text-2xl font-bold">
+                                {partido.local.goles}
+                              </p>
+                            </div>
+                            <div className="w-10 h-10 flex items-center justify-center">
                               <Image
+                                className="object-contain"
                                 src={partido.local.logo || "/placeholder.svg"}
                                 alt={partido.local.nombre}
                                 width={40}
                                 height={40}
-                                className="object-contain"
                               />
                             </div>
-                            <div>
-                              <span className="font-medium">
-                                {partido.local.nombre}
-                              </span>
-                            </div>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <span className="text-lg font-bold">
-                              {partido.local.goles}
-                            </span>
-                            <span className="text-xs">-</span>
-                            <span className="text-lg font-bold">
-                              {partido.visitante.goles}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <div>
-                              <span className="font-medium">
+                          <span className="text-xs">-</span>
+                          <div className="flex items-center gap-3 flex-1">
+                            <div className="text-left">
+                              <p className="font-medium">
                                 {partido.visitante.nombre}
-                              </span>
+                              </p>
+                              <p className="text-2xl font-bold">
+                                {partido.visitante.goles}
+                              </p>
                             </div>
-                            <div className="relative w-10 h-10 flex-shrink-0">
-                              <div
-                                className="absolute inset-0 rounded-full"
-                                style={{
-                                  backgroundColor: partido.visitante.color,
-                                }}
-                              ></div>
+                            <div className="w-10 h-10 flex items-center justify-center">
                               <Image
+                                className="object-contain"
                                 src={
                                   partido.visitante.logo || "/placeholder.svg"
                                 }
                                 alt={partido.visitante.nombre}
                                 width={40}
                                 height={40}
-                                className="object-contain"
                               />
                             </div>
                           </div>
