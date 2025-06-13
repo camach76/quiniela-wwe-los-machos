@@ -47,7 +47,7 @@ export class UserEntity {
       total: this.total_apostados,
       precision: this.precision,
       racha: this.racha,
-      avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${this.username}`,
+      avatar: `https://api.dicebear.com/7.x/initials/png?seed=${this.username}`,
       esUsuario: this.id === currentUserId,
     };
   }

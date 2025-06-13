@@ -1,39 +1,16 @@
 import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/ssr";
-import { NextResponse } from "next/server";
-import { GetRankingUsers } from "@/backend/core/usecases/GetRankingUsers";
 import { SupabaseUserRepository } from "@/backend/core/infra/repositories/SupabaseUserReposotory";
+import { GetRankingUsers } from "@/backend/core/usecases/GetRankingUsers";
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { NextResponse } from "next/server";
 
 export async function GET() {
-  const cookieStore = await cookies();
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get: (name) => cookieStore.get(name)?.value,
-        set: (name, value, options) => {
-          cookieStore.set({ name, value, ...options });
-        },
-        remove: (name, options) => {
-          cookieStore.set({ name, value: "", ...options, maxAge: -1 });
-        },
-      },
-    },
-  );
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const supabase = createServerComponentClient({ cookies });
 
   const repo = new SupabaseUserRepository(supabase);
   const useCase = new GetRankingUsers(repo);
-  const result = await useCase.execute(session.user.id);
+
+  const result = await useCase.execute();
 
   return NextResponse.json(result);
 }
