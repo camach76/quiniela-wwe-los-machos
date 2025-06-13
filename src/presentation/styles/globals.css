@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+:root[data-theme="light"] {
+  --background: #f8fafc;
+  --foreground: #1e293b;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #475569;
+  --muted: #e2e8f0;
+  --muted-foreground: #64748b;
+  --border: #cbd5e1;
+  --input: #f1f5f9;
+  --ring: #2563eb;
+  --card: #ffffff;
+  --card-foreground: #1e293b;
+  --popover: #ffffff;
+  --popover-foreground: #1e293b;
+}
+
+/* Tema oscuro */
+.dark {
+  :root {
+    --background: #0d1117;
+    --foreground: #f8fafc;
+    /* ... */
+  }
+}
