@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import clubes from "@/data/clubes_mundial.json";
 import {
   FaFutbol,
@@ -24,6 +24,62 @@ interface Club {
 export default function Dashboard() {
   const userName = "Usuario";
   const [activeTab, setActiveTab] = useState("proximos");
+  const [topJugadores, setTopJugadores] = useState<Array<{
+    id: string;
+    nombre: string;
+    puntos: number;
+    posicion: number;
+    esUsuario?: boolean;
+  }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Obtener los mejores jugadores
+  useEffect(() => {
+    const fetchTopJugadores = async () => {
+      try {
+        setLoading(true);
+        
+        // Obtener el ID del usuario actual (puedes obtenerlo de tu sistema de autenticación)
+        // Por ahora, usaremos un valor fijo o de la sesión
+        const userId = 'usuario-actual-id'; // Reemplaza esto con el ID real del usuario
+        
+        const res = await fetch(`/api/ranking?userId=${encodeURIComponent(userId)}`, {
+          credentials: "include",
+          cache: 'no-store', // Evitar caché para obtener datos actualizados
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(errorData.error || "Error al cargar el ranking");
+        }
+
+        const data = await res.json();
+        
+        // Tomar los primeros 5 jugadores y agregar posición
+        const top5 = data
+          .sort((a: any, b: any) => b.puntos - a.puntos)
+          .slice(0, 5)
+          .map((jugador: any, index: number) => ({
+            id: jugador.id,
+            nombre: jugador.nombre,
+            puntos: jugador.puntos,
+            posicion: index + 1,
+            esUsuario: jugador.esUsuario || false,
+          }));
+
+        setTopJugadores(top5);
+        setError(null);
+      } catch (err) {
+        console.error("Error al cargar los mejores jugadores:", err);
+        setError("No se pudieron cargar los mejores jugadores");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTopJugadores();
+  }, []);
 
   // Función para obtener el logo de un equipo por su nombre
   const obtenerLogoEquipo = (nombreEquipo: string): string => {
@@ -509,18 +565,21 @@ export default function Dashboard() {
                 <FaListOl className="text-green-500" /> Top Jugadores
               </h2>
               <div className="space-y-3">
-                {[
-                  { nombre: "Carlos R.", puntos: 156, posicion: 1 },
-                  { nombre: "María L.", puntos: 142, posicion: 2 },
-                  { nombre: "Juan P.", puntos: 138, posicion: 3 },
-                  { nombre: "Ana S.", puntos: 135, posicion: 4 },
-                  {
-                    nombre: "Usuario",
-                    puntos: 125,
-                    posicion: 8,
-                    esUsuario: true,
-                  },
-                ].map((jugador) => (
+                {loading ? (
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <p className="text-sm text-gray-500 mt-2">Cargando jugadores...</p>
+                  </div>
+                ) : error ? (
+                  <div className="text-center py-4 text-red-500 text-sm">
+                    {error}
+                  </div>
+                ) : topJugadores.length === 0 ? (
+                  <div className="text-center py-4 text-gray-500 text-sm">
+                    No hay datos de jugadores disponibles
+                  </div>
+                ) : (
+                  topJugadores.map((jugador) => (
                   <div
                     key={jugador.posicion}
                     className={`flex items-center justify-between p-2 rounded-lg ${
@@ -553,7 +612,8 @@ export default function Dashboard() {
                       {jugador.puntos}
                     </span>
                   </div>
-                ))}
+                ))
+                )}
                 <Link
                   href="/ranking"
                   className="block text-center text-sm text-blue-600 hover:text-blue-800 mt-2 py-1"
