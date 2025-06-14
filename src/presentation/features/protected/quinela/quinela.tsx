@@ -286,34 +286,21 @@ export default function MiQuinela() {
 
   const actualizarPronostico = (partidoId: string, campo: 'local' | 'visitante', valor: number | null) => {
     // Validar que el valor sea un número o null
-    if (valor !== null && (isNaN(valor) || valor < 0)) {
-      return;
-    }
-
-    // Obtener el pronóstico actual o crear uno nuevo
-    const pronosticoActual = pronosticos[partidoId] || { local: null, visitante: null };
+    const valorNumerico = valor === null ? null : Number(valor);
     
-    // Crear el pronóstico actualizado
-    const pronosticoActualizado = {
-      ...pronosticoActual,
-      [campo]: valor
-    };
-
-    // Actualizar el estado de los pronósticos editados
-    setPronosticosEditados(prev => ({
+    // Actualizar directamente el estado de los pronósticos
+    setPronosticos(prev => ({
       ...prev,
-      [partidoId]: pronosticoActualizado
+      [partidoId]: {
+        ...prev[partidoId],
+        [campo]: valorNumerico
+      }
     }));
 
-    // Verificar si hay cambios respecto al pronóstico original
-    const hayCambios = 
-      pronosticoActual.local !== pronosticoActualizado.local ||
-      pronosticoActual.visitante !== pronosticoActualizado.visitante;
-
-    // Actualizar el estado de cambios pendientes
+    // Marcar que hay cambios pendientes
     setCambiosPendientes(prev => ({
       ...prev,
-      [partidoId]: hayCambios
+      [partidoId]: true
     }));
   };
 
@@ -782,10 +769,17 @@ export default function MiQuinela() {
                               <input
                                 type="number"
                                 min="0"
-                                max="99"
                                 className="w-14 h-14 text-center text-xl font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 value={pronosticos[partido.id]?.local ?? ""}
-                                onChange={(e) => actualizarPronostico(partido.id, 'local', e.target.value ? parseInt(e.target.value) : null)}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  actualizarPronostico(
+                                    partido.id, 
+                                    'local', 
+                                    value === "" ? null : parseInt(value, 10)
+                                  );
+                                }}
+                                onFocus={(e) => e.target.select()}
                                 aria-label={`Goles de ${partido.club_a?.nombre || 'local'}`}
                                 disabled={guardando[partido.id] || false}
                               />
@@ -797,10 +791,17 @@ export default function MiQuinela() {
                               <input
                                 type="number"
                                 min="0"
-                                max="99"
                                 className="w-14 h-14 text-center text-xl font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 value={pronosticos[partido.id]?.visitante ?? ""}
-                                onChange={(e) => actualizarPronostico(partido.id, 'visitante', e.target.value ? parseInt(e.target.value) : null)}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  actualizarPronostico(
+                                    partido.id, 
+                                    'visitante', 
+                                    value === "" ? null : parseInt(value, 10)
+                                  );
+                                }}
+                                onFocus={(e) => e.target.select()}
                                 aria-label={`Goles de ${partido.club_b?.nombre || 'visitante'}`}
                                 disabled={guardando[partido.id] || false}
                               />
