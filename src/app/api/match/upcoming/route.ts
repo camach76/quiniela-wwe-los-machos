@@ -16,13 +16,14 @@ export async function GET() {
       },
     });
 
-    // Primero obtenemos los próximos partidos
+    // Obtenemos los próximos partidos
+    // Aumentamos el límite a 10 partidos para mostrar más partidos en la interfaz
     const { data: matches, error } = await supabase
       .from('matches')
       .select('*')
       .gte('fecha', new Date().toISOString())
       .order('fecha', { ascending: true })
-      .limit(4);
+      .limit(10);
 
     if (error) {
       throw error;
