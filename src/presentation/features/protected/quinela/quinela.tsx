@@ -313,24 +313,52 @@ export default function MiQuinela() {
     );
   };
 
-  const actualizarPronostico = (partidoId: string, campo: 'local' | 'visitante', valor: number | null) => {
-    // Validar que el valor sea un número o null
-    const valorNumerico = valor === null ? null : Number(valor);
+  const actualizarPronostico = (partidoId: string, tipo: 'local' | 'visitante', valor: string | number | null) => {
+    console.log(`Actualizando pronóstico - Partido: ${partidoId}, ${tipo}:`, valor);
     
-    // Actualizar directamente el estado de los pronósticos
-    setPronosticos(prev => ({
-      ...prev,
-      [partidoId]: {
-        ...prev[partidoId],
-        [campo]: valorNumerico
+    // Convertir el valor a número o null
+    let valorNumerico: number | null = null;
+    if (valor !== null && valor !== '' && valor !== undefined) {
+      // Si es un string, convertirlo a número, si no, usar el valor directamente
+      valorNumerico = typeof valor === 'string' ? parseInt(valor, 10) : valor;
+      // Si el resultado es NaN (por ejemplo, si el string no es un número), usar null
+      if (isNaN(valorNumerico)) {
+        valorNumerico = null;
       }
-    }));
-
-    // Marcar que hay cambios pendientes
+    }
+    
+    console.log(`Valor convertido para ${tipo}:`, valorNumerico);
+    
+    setPronosticos(prev => {
+      const nuevoEstado = {
+        ...prev,
+        [partidoId]: {
+          ...prev[partidoId],
+          [tipo]: valorNumerico
+        }
+      };
+      console.log('Nuevo estado de pronosticos:', nuevoEstado);
+      return nuevoEstado;
+    });
+    
+    setPronosticosEditados(prev => {
+      const nuevoEstado = {
+        ...prev,
+        [partidoId]: {
+          ...prev[partidoId],
+          [tipo]: valorNumerico
+        }
+      };
+      console.log('Nuevo estado de pronosticosEditados:', nuevoEstado);
+      return nuevoEstado;
+    });
+    
     setCambiosPendientes(prev => ({
       ...prev,
       [partidoId]: true
     }));
+    
+    console.log(`Marcado partido ${partidoId} con cambios pendientes`);
   };
 
   // Cargar pronósticos existentes del usuario
@@ -402,31 +430,54 @@ export default function MiQuinela() {
   }, [user?.id]);
 
   const guardarPronostico = async (partidoId: string) => {
+    console.log('Iniciando guardarPronostico para partido:', partidoId);
+    console.log('pronosticosEditados:', pronosticosEditados);
+    
     const pronostico = pronosticosEditados[partidoId];
+    console.log('Pronóstico a guardar (antes de validar):', pronostico);
     
     if (!pronostico) {
-      setError("No hay cambios para guardar");
+      const errorMsg = "No hay cambios para guardar";
+      console.error(errorMsg);
+      setError(errorMsg);
       return false;
     }
     
     if (!user?.id) {
-      setError("Debes iniciar sesión para guardar pronósticos");
+      const errorMsg = "Debes iniciar sesión para guardar pronósticos";
+      console.error(errorMsg);
+      setError(errorMsg);
       router.push('/auth/login');
       return false;
     }
     
+    // Obtener los valores, asegurándose de que sean números o null
+    const local = typeof pronostico.local === 'number' ? pronostico.local : 
+                 (pronostico.local !== null && pronostico.local !== '' ? 
+                  parseInt(pronostico.local as string, 10) : null);
+    const visitante = typeof pronostico.visitante === 'number' ? pronostico.visitante : 
+                      (pronostico.visitante !== null && pronostico.visitante !== '' ? 
+                       parseInt(pronostico.visitante as string, 10) : null);
+    
+    console.log('Valores procesados para guardar:', { local, visitante });
+    
     // Validar que ambos pronósticos tengan valor
-    if (pronostico.local === null || pronostico.visitante === null) {
-      setError("Debes ingresar un valor para ambos equipos");
+    if (local === null || visitante === null) {
+      const errorMsg = `Debes ingresar un valor para ambos equipos (local: ${local}, visitante: ${visitante})`;
+      console.error(errorMsg);
+      setError(errorMsg);
       return false;
     }
     
     // Validar que los valores sean números enteros no negativos
-    if (!Number.isInteger(pronostico.local) || !Number.isInteger(pronostico.visitante) || 
-        pronostico.local < 0 || pronostico.visitante < 0) {
-      setError("Los goles deben ser números enteros no negativos");
+    if (isNaN(local) || isNaN(visitante) || local < 0 || visitante < 0) {
+      const errorMsg = `Los goles deben ser números enteros no negativos (local: ${local}, visitante: ${visitante})`;
+      console.error(errorMsg);
+      setError(errorMsg);
       return false;
     }
+    
+    console.log('Validaciones pasadas, procediendo a guardar...');
     
     // Actualizar el estado de guardado para este partido
     setGuardando(prev => ({
@@ -437,37 +488,55 @@ export default function MiQuinela() {
     setError(null);
     
     try {
+      console.log('Obteniendo sesión de Supabase...');
       // Obtener la sesión actual
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Error al obtener la sesión:', sessionError);
+        throw sessionError;
+      }
       
       if (!session) {
-        throw new Error('No se pudo obtener la sesión del usuario');
+        const errorMsg = 'No se pudo obtener la sesión del usuario';
+        console.error(errorMsg);
+        throw new Error(errorMsg);
       }
       
       // Usar el ID de usuario como parte del identificador de sesión
       const sessionId = `${user.id}-${Date.now()}`;
+      console.log('Session ID generado:', sessionId);
+      
+      const requestBody = {
+        match_id: parseInt(partidoId, 10),
+        user_id: user.id,
+        session_id: sessionId,
+        prediccion_local: pronostico.local,
+        prediccion_visitante: pronostico.visitante,
+        puntos: 0,
+        created_at: new Date().toISOString()
+      };
+      
+      console.log('Enviando solicitud a /api/bets con:', requestBody);
       
       const response = await fetch('/api/bets', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          match_id: parseInt(partidoId, 10),
-          user_id: user.id,
-          session_id: sessionId, // Usamos un identificador único basado en el usuario y timestamp
-          prediccion_local: pronostico.local,
-          prediccion_visitante: pronostico.visitante,
-          puntos: 0, // Valor por defecto hasta que termine el partido
-          created_at: new Date().toISOString()
-        })
+        body: JSON.stringify(requestBody)
       });
       
       const responseData = await response.json();
+      console.log('Respuesta del servidor:', responseData);
       
       if (!response.ok) {
-        throw new Error(responseData.error || 'Error al guardar el pronóstico');
+        const errorMsg = responseData.error || 'Error al guardar el pronóstico';
+        console.error('Error en la respuesta del servidor:', errorMsg);
+        throw new Error(errorMsg);
       }
+      
+      console.log('Pronóstico guardado exitosamente, actualizando estado local...');
       
       // Actualizar el estado local con el nuevo pronóstico
       setPronosticos(prev => ({
@@ -478,28 +547,15 @@ export default function MiQuinela() {
         }
       }));
       
-      // Limpiar el estado de cambios pendientes
-      setCambiosPendientes(prev => ({
-        ...prev,
-        [partidoId]: false
-      }));
-      
-      // Actualizar los pronósticos editados para que coincidan con los guardados
-      setPronosticosEditados(prev => ({
-        ...prev,
-        [partidoId]: {
-          local: pronostico.local,
-          visitante: pronostico.visitante
-        }
-      }));
-      
+      console.log('Estado actualizado correctamente');
       return true;
     } catch (error) {
-      console.error('Error al guardar pronóstico:', error);
-      setError(error instanceof Error ? error.message : 'Error desconocido al guardar el pronóstico');
+      const errorMsg = error instanceof Error ? error.message : 'Error desconocido al guardar el pronóstico';
+      console.error('Error en guardarPronostico:', error);
+      setError(errorMsg);
       return false;
     } finally {
-      // Restablecer el estado de guardado para este partido
+      console.log('Finalizando guardarPronostico');
       setGuardando(prev => ({
         ...prev,
         [partidoId]: false
@@ -804,19 +860,23 @@ export default function MiQuinela() {
                               <input
                                 type="number"
                                 min="0"
-                                className="w-14 h-12 text-center text-lg font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                className={`w-14 h-12 text-center text-lg font-bold border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none ${
+                                  partidoYaComenzo(partido.fecha) 
+                                    ? 'border-gray-200 bg-gray-50 text-gray-400' 
+                                    : 'border-gray-300 text-gray-800'
+                                }`}
                                 value={pronosticos[partido.id]?.local ?? ""}
                                 onChange={(e) => {
                                   const value = e.target.value;
                                   actualizarPronostico(
                                     partido.id, 
                                     'local', 
-                                    value === "" ? null : parseInt(value, 10)
+                                    value === "" ? null : value
                                   );
                                 }}
                                 onFocus={(e) => e.target.select()}
                                 aria-label={`Goles de ${partido.club_a?.nombre || 'local'}`}
-                                disabled={guardando[partido.id] || false}
+                                disabled={guardando[partido.id] || partidoYaComenzo(partido.fecha)}
                               />
                               
                               <span className="text-xl font-bold w-4 text-center">-</span>
@@ -824,19 +884,23 @@ export default function MiQuinela() {
                               <input
                                 type="number"
                                 min="0"
-                                className="w-14 h-12 text-center text-lg font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                className={`w-14 h-12 text-center text-lg font-bold border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none ${
+                                  partidoYaComenzo(partido.fecha) 
+                                    ? 'border-gray-200 bg-gray-50 text-gray-400' 
+                                    : 'border-gray-300 text-gray-800'
+                                }`}
                                 value={pronosticos[partido.id]?.visitante ?? ""}
                                 onChange={(e) => {
                                   const value = e.target.value;
                                   actualizarPronostico(
                                     partido.id, 
                                     'visitante', 
-                                    value === "" ? null : parseInt(value, 10)
+                                    value === "" ? null : value
                                   );
                                 }}
                                 onFocus={(e) => e.target.select()}
                                 aria-label={`Goles de ${partido.club_b?.nombre || 'visitante'}`}
-                                disabled={guardando[partido.id] || false}
+                                disabled={guardando[partido.id] || partidoYaComenzo(partido.fecha)}
                               />
                             </div>
                             
@@ -988,25 +1052,39 @@ export default function MiQuinela() {
                             </div>
                           </div>
                           
-                          {!partidoYaComenzo(partido.fecha) && (
-                            <div className="mt-3 flex justify-end">
+                          <div className="mt-3 flex justify-end">
+                            {!partidoYaComenzo(partido.fecha) ? (
                               <button
-                                onClick={() => {
-                                  // Actualizar pronosticosEditados con los valores actuales antes de guardar
+                                onClick={async () => {
+                                  console.log('Iniciando onClick del botón de guardar');
+                                  
+                                  // Crear el objeto de pronóstico actualizado
+                                  const pronosticoActualizado = {
+                                    local: pronosticos[partido.id]?.local ?? null,
+                                    visitante: pronosticos[partido.id]?.visitante ?? null
+                                  };
+                                  
+                                  console.log('Actualizando pronosticosEditados con:', pronosticoActualizado);
+                                  
+                                  // Actualizar pronosticosEditados
                                   setPronosticosEditados(prev => ({
                                     ...prev,
-                                    [partido.id]: {
-                                      local: pronosticos[partido.id]?.local ?? null,
-                                      visitante: pronosticos[partido.id]?.visitante ?? null
-                                    }
+                                    [partido.id]: pronosticoActualizado
                                   }));
+                                  
                                   // Marcar cambios como pendientes
                                   setCambiosPendientes(prev => ({
                                     ...prev,
                                     [partido.id]: true
                                   }));
-                                  // Llamar a guardarPronostico después de actualizar el estado
-                                  setTimeout(() => guardarPronostico(partido.id), 0);
+                                  
+                                  // Esperar a que se actualice el estado
+                                  await new Promise(resolve => setTimeout(resolve, 0));
+                                  
+                                  // Llamar a guardarPronostico
+                                  console.log('Llamando a guardarPronostico...');
+                                  const resultado = await guardarPronostico(partido.id);
+                                  console.log('Resultado de guardarPronostico:', resultado);
                                 }}
                                 disabled={guardando[partido.id]}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -1027,8 +1105,12 @@ export default function MiQuinela() {
                                   </span>
                                 )}
                               </button>
-                            </div>
-                          )}
+                            ) : (
+                              <div className="text-sm text-gray-500 italic">
+                                No se pueden modificar los pronósticos una vez iniciado el partido
+                              </div>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
