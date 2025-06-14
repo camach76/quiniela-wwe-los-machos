@@ -118,68 +118,154 @@ export default function Dashboard() {
     fetchTopJugadores();
   }, []);
 
-  // Función para obtener el logo de un equipo por su nombre
-  const obtenerLogoEquipo = (nombreEquipo: string): string => {
-    const equipo = clubes.find(
-      (club: Club) => club.nombre.toLowerCase() === nombreEquipo.toLowerCase(),
-    );
-    return equipo ? equipo.logo : "/placeholder.svg?height=40&width=40";
+  // Función para obtener los datos de un equipo por su ID
+  const obtenerDatosEquipo = (equipoId: number) => {
+    const equipo = clubes.find((club: any) => club.id === equipoId);
+    return {
+      nombre: equipo?.nombre || 'Equipo Desconocido',
+      logo: equipo?.logo || '/placeholder.svg?height=40&width=40',
+      // Color predeterminado para todos los equipos
+      color: '#4B5563' // Color gris neutro
+    };
   };
 
-  // Datos de ejemplo para partidos próximos
-  const proximosPartidos = [
-    {
-      id: 1,
-      local: {
-        nombre: "Barcelona",
-        logo: obtenerLogoEquipo("Barcelona"),
-        color: "#004D98",
-      },
-      visitante: {
-        nombre: "Real Madrid",
-        logo: obtenerLogoEquipo("Real Madrid"),
-        color: "#FFFFFF",
-      },
-      fecha: "15 Jun",
-      hora: "16:00",
-      competicion: "LaLiga",
-      estadio: "Camp Nou",
-    },
-    {
-      id: 2,
-      local: {
-        nombre: "Manchester City",
-        logo: obtenerLogoEquipo("Manchester City"),
-        color: "#6CABDD",
-      },
-      visitante: {
-        nombre: "Liverpool",
-        logo: obtenerLogoEquipo("Liverpool"),
-        color: "#C8102E",
-      },
-      fecha: "18 Jun",
-      hora: "15:30",
-      competicion: "Premier League",
-      estadio: "Etihad Stadium",
-    },
-    {
-      id: 3,
-      local: {
-        nombre: "Bayern Munich",
-        logo: obtenerLogoEquipo("Bayern Munich"),
-        color: "#DC052D",
-      },
-      visitante: {
-        nombre: "Borussia Dortmund",
-        logo: obtenerLogoEquipo("Borussia Dortmund"),
-        color: "#FDE100",
-      },
-      fecha: "20 Jun",
-      hora: "18:45",
-      competicion: "Bundesliga",
-      estadio: "Allianz Arena",
-    },
-  ];
+  // Estado para los próximos partidos
+  const [proximosPartidos, setProximosPartidos] = useState<Array<{
+    id: number;
+    local: {
+      nombre: string;
+      logo: string;
+      color: string;
+    };
+    visitante: {
+      nombre: string;
+      logo: string;
+      color: string;
+    };
+    fecha: string;
+    hora: string;
+    competicion: string;
+    estadio: string;
+  }>>([]);
+  const [loadingPartidos, setLoadingPartidos] = useState(true);
+
+  // Cargar próximos partidos
+  useEffect(() => {
+    const fetchProximosPartidos = async () => {
+      try {
+        setLoadingPartidos(true);
+        const res = await fetch('/api/match/upcoming');
+        
+        if (!res.ok) {
+          throw new Error('Error al cargar los próximos partidos');
+        }
+        
+        const data = await res.json();
+        const partidosMapeados = data.map((partido: any) => {
+          const fecha = new Date(partido.fecha);
+          const fechaFormateada = fecha.toLocaleDateString('es-ES', {
+            day: 'numeric',
+            month: 'short'
+          });
+          const horaFormateada = fecha.toLocaleTimeString('es-ES', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          });
+          
+          // Usar los datos de los equipos que vienen en la respuesta
+          const equipoLocal = partido.club_a || {};
+          const equipoVisitante = partido.club_b || {};
+          
+          return {
+            id: partido.id,
+            local: {
+              nombre: equipoLocal.nombre || 'Equipo Local',
+              logo: equipoLocal.logo_url || '/placeholder.svg',
+              color: '#4B5563' // Color gris por defecto
+            },
+            visitante: {
+              nombre: equipoVisitante.nombre || 'Equipo Visitante',
+              logo: equipoVisitante.logo_url || '/placeholder.svg',
+              color: '#4B5563' // Color gris por defecto
+            },
+            fecha: fechaFormateada,
+            hora: horaFormateada,
+            competicion: 'Mundial de clubes',
+            estadio: partido.estadio || 'Estadio no especificado'
+          };
+        });
+        
+        setProximosPartidos(partidosMapeados);
+      } catch (error) {
+        console.error('Error al cargar los próximos partidos:', error);
+        const ejemploLocal1 = obtenerDatosEquipo(0);
+        const ejemploVisitante1 = obtenerDatosEquipo(1);
+        const ejemploLocal2 = obtenerDatosEquipo(2);
+        const ejemploVisitante2 = obtenerDatosEquipo(3);
+        const ejemploLocal3 = obtenerDatosEquipo(4);
+        const ejemploVisitante3 = obtenerDatosEquipo(5);
+        
+        setProximosPartidos([
+          {
+            id: 1,
+            local: {
+              nombre: "Barcelona",
+              logo: ejemploLocal1.logo,
+              color: ejemploLocal1.color,
+            },
+            visitante: {
+              nombre: "Real Madrid",
+              logo: ejemploVisitante1.logo,
+              color: ejemploVisitante1.color,
+            },
+            fecha: "15 Jun",
+            hora: "16:00",
+            competicion: "LaLiga",
+            estadio: "Camp Nou",
+          },
+          {
+            id: 2,
+            local: {
+              nombre: "Manchester City",
+              logo: ejemploLocal2.logo,
+              color: ejemploLocal2.color,
+            },
+            visitante: {
+              nombre: "Liverpool",
+              logo: ejemploVisitante2.logo,
+              color: ejemploVisitante2.color,
+            },
+            fecha: "18 Jun",
+            hora: "15:30",
+            competicion: "Premier League",
+            estadio: "Etihad Stadium",
+          },
+          {
+            id: 3,
+            local: {
+              nombre: "Bayern Munich",
+              logo: ejemploLocal3.logo,
+              color: ejemploLocal3.color,
+            },
+            visitante: {
+              nombre: "Borussia Dortmund",
+              logo: ejemploVisitante3.logo,
+              color: ejemploVisitante3.color,
+            },
+            fecha: "20 Jun",
+            hora: "18:45",
+            competicion: "Bundesliga",
+            estadio: "Allianz Arena",
+          },
+        ]);
+      } finally {
+        setLoadingPartidos(false);
+      }
+    };
+
+    fetchProximosPartidos();
+  }, []);
 
   // Datos de ejemplo para partidos recientes
   const partidosRecientes = [
@@ -187,14 +273,14 @@ export default function Dashboard() {
       id: 4,
       local: {
         nombre: "Paris Saint-Germain",
-        logo: obtenerLogoEquipo("Paris Saint-Germain"),
-        color: "#004170",
+        logo: obtenerDatosEquipo(0).logo,
+        color: obtenerDatosEquipo(0).color,
         goles: 2,
       },
       visitante: {
         nombre: "Marseille",
-        logo: obtenerLogoEquipo("Marseille"),
-        color: "#2B63AD",
+        logo: obtenerDatosEquipo(1).logo,
+        color: obtenerDatosEquipo(1).color,
         goles: 1,
       },
       fecha: "10 Jun",
@@ -225,14 +311,14 @@ export default function Dashboard() {
       id: 6,
       local: {
         nombre: "Chelsea",
-        logo: obtenerLogoEquipo("Chelsea"),
-        color: "#034694",
+        logo: obtenerDatosEquipo(2).logo,
+        color: obtenerDatosEquipo(2).color,
         goles: 1,
       },
       visitante: {
         nombre: "Arsenal",
-        logo: obtenerLogoEquipo("Arsenal"),
-        color: "#EF0107",
+        logo: obtenerDatosEquipo(3).logo,
+        color: obtenerDatosEquipo(3).color,
         goles: 2,
       },
       fecha: "5 Jun",
