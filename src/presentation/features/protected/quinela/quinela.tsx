@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import {
+import { 
   FaSignOutAlt,
   FaBell,
   FaFutbol,
@@ -14,8 +14,12 @@ import {
   FaChevronUp,
   FaSave,
   FaSpinner,
-  FaExclamationTriangle
+  FaExclamationTriangle,
+  FaUser
 } from "react-icons/fa"
+import { useUserSession } from "@/presentation/hooks/useUserSession";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { useRouter } from "next/navigation";
 
 import { Competition, Match as MatchType, useUpcomingMatches } from '@/presentation/hooks/useUpcomingMatches';
 
@@ -30,14 +34,117 @@ type PartidoConJornada = MatchType & {
 }
 
 export default function MiQuinela() {
-  const userName = "Usuario"
-  const [tabActiva, setTabActiva] = useState("pendientes")
-  const [jornadas, setJornadas] = useState<Record<string, boolean>>({})
-  const { matches: partidos, loading: cargando, error: errorApi } = useUpcomingMatches();
+  const router = useRouter();
+  const supabase = createClientComponentClient();
+  const { user, loading: cargandoUsuario } = useUserSession();
+  const [userName, setUserName] = useState("Usuario");
+  
+  const [tabActiva, setTabActiva] = useState("pendientes");
+  const [jornadas, setJornadas] = useState<Record<string, boolean>>({});
+  const { matches: partidos, loading: cargandoPartidos, error: errorApi } = useUpcomingMatches();
   const [partidosPendientes, setPartidosPendientes] = useState<PartidoConJornada[]>([]);
-  const [pronosticos, setPronosticos] = useState<Record<string, Pronostico>>({})
-  const [error, setError] = useState<string | null>(null)
-  const [guardando, setGuardando] = useState(false);
+  
+  // Estados para manejar los pronósticos
+  const [pronosticos, setPronosticos] = useState<Record<string, Pronostico>>({});
+  const [cambiosPendientes, setCambiosPendientes] = useState<Record<string, boolean>>({});
+  const [pronosticosEditados, setPronosticosEditados] = useState<Record<string, Pronostico>>({});
+  const [error, setError] = useState<string | null>(null);
+  const [guardando, setGuardando] = useState<Record<string, boolean>>({});
+  const [cargando, setCargando] = useState(false);
+  
+  // Estado para controlar la carga inicial
+  const [cargandoInicial, setCargandoInicial] = useState(true);
+  
+  // Función para renderizar el botón de guardar
+  const renderBotonGuardar = (partidoId: string) => {
+    const estaGuardando = guardando[partidoId] || false;
+    const tieneCambios = cambiosPendientes[partidoId] || false;
+    
+    if (!tieneCambios) return null;
+    
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      guardarPronostico(partidoId);
+    };
+    
+    return (
+      <button
+        onClick={handleClick}
+        disabled={estaGuardando}
+        className={`ml-2 px-3 py-1 rounded-md text-sm font-medium ${
+          estaGuardando 
+            ? 'bg-gray-300 text-gray-600 cursor-not-allowed' 
+            : 'bg-blue-600 text-white hover:bg-blue-700'
+        }`}
+      >
+        {estaGuardando ? (
+          <span className="flex items-center gap-2">
+            <FaSpinner className="animate-spin" />
+            Guardando...
+          </span>
+        ) : (
+          <span className="flex items-center gap-2">
+            <FaSave />
+            Guardar
+          </span>
+        )}
+      </button>
+    );
+  };
+
+  // Cargar datos del usuario al montar el componente
+  useEffect(() => {
+    const cargarDatosUsuario = async () => {
+      if (!user?.id) {
+        setCargandoInicial(false);
+        return;
+      }
+      
+      try {
+        // Usar el email como nombre por defecto
+        const nombrePorDefecto = user.email?.split('@')[0] || 'Usuario';
+        console.log('Configurando nombre por defecto:', nombrePorDefecto);
+        setUserName(nombrePorDefecto);
+        
+        try {
+          console.log('Intentando cargar perfil para el usuario ID:', user.id);
+          // Verificar si existe el perfil
+          const { data: perfil, error: errorPerfil } = await supabase
+            .from('profiles')
+            .select('nombre')
+            .eq('id', user.id)
+            .maybeSingle(); // Usamos maybeSingle en lugar de single para evitar errores 404
+            
+          if (errorPerfil) {
+            console.warn('Error al cargar el perfil del usuario:', errorPerfil);
+            // Continuar con el flujo aunque falle la carga del perfil
+            setCargandoInicial(false);
+            return;
+          }
+          
+          console.log('Perfil cargado:', perfil);
+          
+          if (perfil?.nombre) {
+            console.log('Estableciendo nombre del perfil:', perfil.nombre);
+            setUserName(perfil.nombre);
+          }
+          
+        } catch (error) {
+          console.warn('Error al intentar cargar el perfil:', error);
+          // Continuar con el nombre por defecto si hay un error
+          console.log('Usando email como nombre:', nombrePorDefecto);
+        } finally {
+          // Asegurarse de que siempre se quite el estado de carga inicial
+          setCargandoInicial(false);
+        }
+      } catch (error) {
+        console.error('Error al cargar perfil:', error);
+        setCargandoInicial(false);
+      }
+    };
+    
+    cargarDatosUsuario();
+  }, [user?.id]);
 
   useEffect(() => {
     if (partidos.length > 0) {
@@ -74,66 +181,344 @@ export default function MiQuinela() {
     }))
   }
 
-  const actualizarPronostico = (partidoId: string, equipo: 'local' | 'visitante', valor: string) => {
-    // Si el valor está vacío, lo establecemos como null, de lo contrario lo convertimos a número
-    const valorNumerico = valor === "" ? null : Number.parseInt(valor, 10);
+
+
+  const renderPartido = (partido: PartidoConJornada) => {
+    const pronosticoActual = pronosticos[partido.id] || { local: null, visitante: null };
+    const [pronosticoEditado, setPronosticoEditado] = useState<Pronostico>({
+      local: pronosticoActual.local,
+      visitante: pronosticoActual.visitante
+    });
     
-    // Si el valor no es un número válido, lo establecemos como null
-    const valorFinal = (valorNumerico !== null && !isNaN(valorNumerico)) ? valorNumerico : null;
+    const estaGuardando = guardando[partido.id] || false;
+    const tieneCambios = cambiosPendientes[partido.id] || false;
+    
+    const handleLocalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value === '' ? null : parseInt(e.target.value, 10);
+      actualizarPronostico(partido.id, 'local', value);
+    };
+    
+    const handleVisitanteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value === '' ? null : parseInt(e.target.value, 10);
+      actualizarPronostico(partido.id, 'visitante', value);
+    };
+    
+    const handleGuardarClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      guardarPronostico(partido.id);
+    };
+    
+    return (
+      <div key={partido.id} className="p-4 border-b border-gray-100 last:border-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-500 truncate">
+                  {partido.competition?.name || 'Partido'}
+                </p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="font-medium text-gray-900">
+                    {partido.home_team}
+                  </span>
+                  <span className="text-gray-400">vs</span>
+                  <span className="font-medium text-gray-900">
+                    {partido.away_team}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min="0"
+                value={pronosticoEditado.local?.toString() || ''}
+                onChange={handleLocalChange}
+                className="w-16 h-10 text-center border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                disabled={estaGuardando}
+              />
+              <span className="text-gray-400">-</span>
+              <input
+                type="number"
+                min="0"
+                value={pronosticoEditado.visitante?.toString() || ''}
+                onChange={handleVisitanteChange}
+                className="w-16 h-10 text-center border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                disabled={estaGuardando}
+              />
+            </div>
+            
+            {tieneCambios && (
+              <button
+                onClick={handleGuardarClick}
+                disabled={estaGuardando}
+                className={`px-3 h-10 rounded-md text-sm font-medium ${
+                  estaGuardando
+                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                    : 'bg-green-600 text-white hover:bg-green-700'
+                }`}
+              >
+                {estaGuardando ? (
+                  <span className="flex items-center gap-2">
+                    <FaSpinner className="animate-spin" />
+                    Guardando...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <FaSave />
+                    Guardar
+                  </span>
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+        
+        <div className="mt-2 text-xs text-gray-500">
+          {formatearFecha(partido.fecha)}
+        </div>
+      </div>
+    );
+  };
 
-    setPronosticos(prev => ({
+  const actualizarPronostico = (partidoId: string, campo: 'local' | 'visitante', valor: number | null) => {
+    // Validar que el valor sea un número o null
+    if (valor !== null && (isNaN(valor) || valor < 0)) {
+      return;
+    }
+
+    // Obtener el pronóstico actual o crear uno nuevo
+    const pronosticoActual = pronosticos[partidoId] || { local: null, visitante: null };
+    
+    // Crear el pronóstico actualizado
+    const pronosticoActualizado = {
+      ...pronosticoActual,
+      [campo]: valor
+    };
+
+    // Actualizar el estado de los pronósticos editados
+    setPronosticosEditados(prev => ({
       ...prev,
-      [partidoId]: {
-        ...(prev[partidoId] || { local: null, visitante: null }),
-        [equipo]: valorFinal,
-      },
+      [partidoId]: pronosticoActualizado
     }));
-  }
 
+    // Verificar si hay cambios respecto al pronóstico original
+    const hayCambios = 
+      pronosticoActual.local !== pronosticoActualizado.local ||
+      pronosticoActual.visitante !== pronosticoActualizado.visitante;
+
+    // Actualizar el estado de cambios pendientes
+    setCambiosPendientes(prev => ({
+      ...prev,
+      [partidoId]: hayCambios
+    }));
+  };
+
+  // Cargar pronósticos existentes del usuario
+  useEffect(() => {
+    const cargarPronosticos = async () => {
+      if (!user?.id) {
+        console.log('No hay usuario autenticado para cargar pronósticos');
+        return;
+      }
+      
+      console.log('Cargando pronósticos para el usuario:', user.id);
+      
+      try {
+        // Usar el endpoint de la API para obtener los pronósticos
+        const response = await fetch(`/api/bets/${user.id}/`);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Error en la respuesta del servidor:', {
+            status: response.status,
+            statusText: response.statusText,
+            errorText
+          });
+          
+          // Si el error es 404, puede que el usuario no tenga pronósticos aún
+          if (response.status === 404) {
+            console.log('El usuario no tiene pronósticos guardados aún');
+            setPronosticos({});
+            return;
+          }
+          
+          throw new Error(`Error al cargar pronósticos: ${response.status} ${response.statusText}`);
+        }
+        
+        let pronosticosUsuario;
+        try {
+          pronosticosUsuario = await response.json();
+          console.log('Respuesta del servidor:', pronosticosUsuario);
+        } catch (jsonError) {
+          console.error('Error al parsear la respuesta JSON:', jsonError);
+          throw new Error('La respuesta del servidor no es un JSON válido');
+        }
+        
+        // Convertir los pronósticos al formato esperado
+        const pronosticosMap: Record<string, Pronostico> = {};
+        
+        if (Array.isArray(pronosticosUsuario)) {
+          pronosticosUsuario.forEach(p => {
+            if (p?.matchId) {
+              pronosticosMap[p.matchId] = {
+                local: p.prediccionA || null,
+                visitante: p.prediccionB || null
+              };
+            }
+          });
+          console.log('Pronósticos cargados:', pronosticosMap);
+        } else {
+          console.log('La respuesta no es un array:', pronosticosUsuario);
+        }
+        
+        setPronosticos(pronosticosMap);
+      } catch (error) {
+        console.error('Error al cargar pronósticos:', error);
+        setError('No se pudieron cargar los pronósticos. Intenta recargar la página.');
+      }
+    };
+    
+    cargarPronosticos();
+  }, [user?.id]);
+
+  const guardarPronostico = async (partidoId: string) => {
+    const pronostico = pronosticosEditados[partidoId];
+    
+    if (!pronostico) {
+      setError("No hay cambios para guardar");
+      return false;
+    }
+    
+    if (!user?.id) {
+      setError("Debes iniciar sesión para guardar pronósticos");
+      router.push('/auth/login');
+      return false;
+    }
+    
+    // Validar que ambos pronósticos tengan valor
+    if (pronostico.local === null || pronostico.visitante === null) {
+      setError("Debes ingresar un valor para ambos equipos");
+      return false;
+    }
+    
+    // Validar que los valores sean números enteros no negativos
+    if (!Number.isInteger(pronostico.local) || !Number.isInteger(pronostico.visitante) || 
+        pronostico.local < 0 || pronostico.visitante < 0) {
+      setError("Los goles deben ser números enteros no negativos");
+      return false;
+    }
+    
+    // Actualizar el estado de guardado para este partido
+    setGuardando(prev => ({
+      ...prev,
+      [partidoId]: true
+    }));
+    
+    setError(null);
+    
+    try {
+      // Obtener la sesión actual
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('No se pudo obtener la sesión del usuario');
+      }
+      
+      // Usar el ID de usuario como parte del identificador de sesión
+      const sessionId = `${user.id}-${Date.now()}`;
+      
+      const response = await fetch('/api/bets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          match_id: parseInt(partidoId, 10),
+          user_id: user.id,
+          session_id: sessionId, // Usamos un identificador único basado en el usuario y timestamp
+          prediccion_local: pronostico.local,
+          prediccion_visitante: pronostico.visitante,
+          puntos: 0, // Valor por defecto hasta que termine el partido
+          created_at: new Date().toISOString()
+        })
+      });
+      
+      const responseData = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Error al guardar el pronóstico');
+      }
+      
+      // Actualizar el estado local con el nuevo pronóstico
+      setPronosticos(prev => ({
+        ...prev,
+        [partidoId]: {
+          local: pronostico.local,
+          visitante: pronostico.visitante
+        }
+      }));
+      
+      // Limpiar el estado de cambios pendientes
+      setCambiosPendientes(prev => ({
+        ...prev,
+        [partidoId]: false
+      }));
+      
+      // Actualizar los pronósticos editados para que coincidan con los guardados
+      setPronosticosEditados(prev => ({
+        ...prev,
+        [partidoId]: {
+          local: pronostico.local,
+          visitante: pronostico.visitante
+        }
+      }));
+      
+      return true;
+    } catch (error) {
+      console.error('Error al guardar pronóstico:', error);
+      setError(error instanceof Error ? error.message : 'Error desconocido al guardar el pronóstico');
+      return false;
+    } finally {
+      // Restablecer el estado de guardado para este partido
+      setGuardando(prev => ({
+        ...prev,
+        [partidoId]: false
+      }));
+    }
+  };
+  
   const guardarPronosticos = async () => {
     if (Object.keys(pronosticos).length === 0) {
       alert("No hay pronósticos para guardar");
       return;
     }
 
-    setGuardando(true);
+    setCargando(true);
     
     try {
-      // Preparar los datos para enviar al backend
-      const pronosticosParaGuardar = Object.entries(pronosticos).map(([partidoId, pronostico]) => ({
-        matchId: partidoId,
-        homeScore: pronostico.local,
-        awayScore: pronostico.visitante,
-        // Agregar más datos según sea necesario para tu backend
-      }));
-
-      // Aquí iría la lógica para guardar en el backend
-      const response = await fetch('/api/bets', {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          // Agregar token de autenticación si es necesario
-          // 'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          userId: "usuario_actual_id", // Deberías obtener esto de tu sistema de autenticación
-          pronosticos: pronosticosParaGuardar
-        })
-      });
+      // Guardar cada pronóstico individualmente
+      const resultados = await Promise.allSettled(
+        Object.entries(pronosticosEditados).map(([partidoId, pronostico]) => 
+          guardarPronostico(partidoId)
+        )
+      );
       
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Error al guardar los pronósticos');
+      // Verificar si hubo algún error
+      const errores = resultados.filter(
+        (result): result is PromiseRejectedResult => result.status === 'rejected'
+      );
+      
+      if (errores.length > 0) {
+        console.error('Errores al guardar pronósticos:', errores);
+        throw new Error('Algunos pronósticos no se pudieron guardar');
       }
-      
-      const result = await response.json();
-      console.log("Pronósticos guardados:", result);
       
       // Mostrar mensaje de éxito
       alert("¡Tus pronósticos se han guardado correctamente!");
-      
-      // Opcional: Actualizar la UI para reflejar que los pronósticos están guardados
-      // Por ejemplo, podrías marcar los partidos como pronosticados
       
     } catch (error: unknown) {
       let errorMessage = 'No se pudieron guardar los pronósticos. Intenta de nuevo más tarde.';
@@ -153,7 +538,7 @@ export default function MiQuinela() {
       // Mostrar notificación de error
       alert(`Error: ${errorMessage}`);
     } finally {
-      setGuardando(false);
+      setCargando(false);
     }
   };
 
@@ -183,7 +568,9 @@ export default function MiQuinela() {
     }
   }
 
-  if (cargando) {
+  const cargandoTotal = cargandoInicial || cargandoPartidos;
+  
+  if (cargandoTotal) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-100">
         <div className="text-center">
@@ -192,6 +579,12 @@ export default function MiQuinela() {
         </div>
       </div>
     )
+  }
+
+  // Redirigir si no hay usuario autenticado
+  if (!cargandoUsuario && !user) {
+    router.push('/auth/login');
+    return null;
   }
 
   if (errorApi || error) {
@@ -214,45 +607,48 @@ export default function MiQuinela() {
     )
   }
 
+  // Función para manejar el cierre de sesión
+  const handleLogout = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    try {
+      await supabase.auth.signOut();
+      router.push('/auth/login');
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+      setError('Error al cerrar sesión. Por favor, inténtalo de nuevo.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-100">
       <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-10 flex items-center justify-between px-4 lg:px-6 py-4">
         <div className="flex items-center gap-3">
           <Link href="/dashboard" className="flex items-center gap-3">
             <div className="relative w-10 h-10">
-              <Image 
-                src="/images/logo.png" 
-                alt="Logo" 
-                fill 
-                className="object-contain" 
-                priority 
+              <Image
+                src="/images/logo.png"
+                alt="Logo Quiniela"
+                width={40}
+                height={40}
+                className="rounded-full"
               />
             </div>
-            <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">
-              WWE Los Machos
+            <span className="text-lg font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
+              Quiniela WWE
             </span>
           </Link>
         </div>
+
         <div className="flex items-center gap-4">
-          <button 
-            className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors relative"
-            aria-label="Notificaciones"
-          >
-            <FaBell className="text-gray-600" />
-            <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
-          <div className="hidden sm:flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium">
-              {userName.charAt(0).toUpperCase()}
-            </div>
-            <span className="text-gray-700 font-medium">Hola, {userName}</span>
-          </div>
-          <button 
-            className="flex items-center gap-2 text-red-500 hover:text-red-700 font-medium transition-colors"
-            aria-label="Cerrar sesión"
+          <span className="hidden sm:inline text-sm font-medium text-gray-700">
+            Hola, {user?.user_metadata?.full_name || 'Usuario'}
+          </span>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900"
           >
             <FaSignOutAlt />
-            <span className="hidden sm:inline">Salir</span>
+            <span>Cerrar sesión</span>
           </button>
         </div>
       </nav>
@@ -269,14 +665,14 @@ export default function MiQuinela() {
           {tabActiva === "pendientes" && (
             <button
               onClick={guardarPronosticos}
-              disabled={Object.keys(pronosticos).length === 0 || guardando}
+              disabled={Object.keys(pronosticos).length === 0 || Object.values(guardando).some(v => v)}
               className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                Object.keys(pronosticos).length === 0 || guardando
+                Object.keys(pronosticos).length === 0 || Object.values(guardando).some(v => v)
                   ? 'bg-gray-300 cursor-not-allowed text-gray-500'
                   : 'bg-green-600 hover:bg-green-700 text-white'
               }`}
             >
-              {guardando ? (
+              {Object.values(guardando).some(v => v) ? (
                 <>
                   <FaSpinner className="animate-spin" />
                   <span>Guardando...</span>
@@ -383,30 +779,30 @@ export default function MiQuinela() {
                               <span className="font-medium text-gray-800">
                                 {partido.club_a?.nombre || 'Local'}
                               </span>
-                            </div>
-
-                            {/* Marcador */}
-                            <div className="flex items-center gap-2 mx-2">
                               <input
                                 type="number"
                                 min="0"
                                 max="99"
                                 className="w-14 h-14 text-center text-xl font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 value={pronosticos[partido.id]?.local ?? ""}
-                                onChange={(e) => actualizarPronostico(partido.id, 'local', e.target.value)}
-                                aria-label={`Goles de ${partido.club_a?.nombre || partido.home_team || 'local'}`}
-                                disabled={guardando}
+                                onChange={(e) => actualizarPronostico(partido.id, 'local', e.target.value ? parseInt(e.target.value) : null)}
+                                aria-label={`Goles de ${partido.club_a?.nombre || 'local'}`}
+                                disabled={guardando[partido.id] || false}
                               />
-                              <span className="text-gray-400 font-bold text-xl">-</span>
+                            </div>
+
+                            <div className="text-xl font-bold mx-2">-</div>
+
+                            <div className="flex-1 flex items-center gap-3">
                               <input
                                 type="number"
                                 min="0"
                                 max="99"
                                 className="w-14 h-14 text-center text-xl font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 value={pronosticos[partido.id]?.visitante ?? ""}
-                                onChange={(e) => actualizarPronostico(partido.id, 'visitante', e.target.value)}
-                                aria-label={`Goles de ${partido.club_b?.nombre || partido.away_team || 'visitante'}`}
-                                disabled={guardando}
+                                onChange={(e) => actualizarPronostico(partido.id, 'visitante', e.target.value ? parseInt(e.target.value) : null)}
+                                aria-label={`Goles de ${partido.club_b?.nombre || 'visitante'}`}
+                                disabled={guardando[partido.id] || false}
                               />
                             </div>
 

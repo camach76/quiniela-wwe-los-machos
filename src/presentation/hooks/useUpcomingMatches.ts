@@ -32,15 +32,27 @@ export const useUpcomingMatches = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    console.log('Iniciando carga de partidos...');
     const fetchMatches = async () => {
       try {
+        console.log('Haciendo fetch a /api/match/upcoming');
         const res = await fetch("/api/match/upcoming");
-        if (!res.ok) throw new Error("Error cargando los partidos");
+        console.log('Respuesta recibida:', res.status, res.statusText);
+        
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error('Error en la respuesta:', errorText);
+          throw new Error(`Error cargando los partidos: ${res.status} ${res.statusText}`);
+        }
+        
         const data = await res.json();
+        console.log('Datos recibidos:', data);
         setMatches(data);
       } catch (err) {
-        setError("No se pudieron cargar los partidos");
+        console.error('Error al cargar partidos:', err);
+        setError(`No se pudieron cargar los partidos: ${err instanceof Error ? err.message : String(err)}`);
       } finally {
+        console.log('Finalizando carga de partidos');
         setLoading(false);
       }
     };
