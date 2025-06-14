@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model bets {
+  id               Int       @id @default(autoincrement())
+  user_id          String    @db.Uuid
+  match_id         Int
+  prediccion_a     Int
+  prediccion_b     Int
+  created_at       DateTime  @default(now()) @db.Timestamptz(6)
+  puntos_obtenidos Int?      @default(0)
+  updated_at       DateTime? @default(now()) @db.Timestamptz(6)
+  matches          matches   @relation(fields: [match_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  profiles         profiles  @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([user_id, match_id])
+  @@unique([user_id, match_id], map: "unique_user_match")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model club_ranking {
+  user_id       String   @id(map: "ranking_pkey") @db.Uuid
+  puntaje_total Int      @default(0)
+  updated_at    DateTime @default(now()) @db.Timestamptz(6)
+  pj            Int?     @default(0)
+  g             Int?     @default(0)
+  e             Int?     @default(0)
+  p             Int?     @default(0)
+  gf            Int?     @default(0)
+  gc            Int?     @default(0)
+  dg            Int?     @default(dbgenerated("(gf - gc)"))
+  pts           Int?     @default(0)
+  forma         String[] @default([])
+  profiles      profiles @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "ranking_user_id_fkey")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model clubs {
+  id                               Int       @id @default(autoincrement())
+  nombre                           String    @unique
+  pais                             String
+  logo_url                         String
+  matches_matches_club_a_idToclubs matches[] @relation("matches_club_a_idToclubs")
+  matches_matches_club_b_idToclubs matches[] @relation("matches_club_b_idToclubs")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model matches {
+  id                             Int      @id @default(autoincrement())
+  club_a_id                      Int
+  club_b_id                      Int
+  fecha                          DateTime @db.Timestamptz(6)
+  estadio                        String
+  resultado_a                    Int?
+  resultado_b                    Int?
+  created_at                     DateTime @default(now()) @db.Timestamptz(6)
+  bets                           bets[]
+  clubs_matches_club_a_idToclubs clubs    @relation("matches_club_a_idToclubs", fields: [club_a_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  clubs_matches_club_b_idToclubs clubs    @relation("matches_club_b_idToclubs", fields: [club_b_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model profiles {
+  id              String        @id @default(dbgenerated("auth.uid()")) @db.Uuid
+  username        String        @unique
+  email           String        @unique
+  role            String        @default("user")
+  created_at      DateTime      @default(now()) @db.Timestamptz(6)
+  puntos          Int?          @default(0)
+  aciertos        Int?          @default(0)
+  total_apostados Int?          @default(0)
+  precision       Decimal?      @default(dbgenerated("\nCASE\n    WHEN (total_apostados > 0) THEN round((((aciertos)::numeric / (total_apostados)::numeric) * (100)::numeric), 2)\n    ELSE (0)::numeric\nEND")) @db.Decimal(5, 2)
+  racha           Int?          @default(0)
+  bets            bets[]
+  club_ranking    club_ranking?
+}
