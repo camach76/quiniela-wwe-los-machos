@@ -582,7 +582,14 @@ export default function MiQuinela() {
       console.error('Error al formatear fecha:', error);
       return 'Fecha inválida';
     }
-  }
+  };
+
+  // Verifica si un partido ya comenzó comparando la fecha actual con la fecha del partido
+  const partidoYaComenzo = (fechaPartido: string) => {
+    const ahora = new Date();
+    const fechaPartidoObj = new Date(fechaPartido);
+    return ahora >= fechaPartidoObj;
+  };
 
   const cargandoTotal = cargandoInicial || cargandoPartidos;
   
@@ -887,10 +894,15 @@ export default function MiQuinela() {
                       {partidosJornada.map(partido => (
                         <div key={partido.id} className="p-4 hover:bg-gray-50 transition-colors">
                           <div className="flex flex-col items-center mb-3">
-                            <div className="flex justify-center w-full mb-1">
+                            <div className="flex justify-center w-full mb-1 gap-2">
                               <span className="text-xs font-medium text-gray-600 bg-gray-50 px-3 py-1 rounded-full border border-gray-200 shadow-sm">
                                 {partido.competicion}
                               </span>
+                              {partidoYaComenzo(partido.fecha) && (
+                                <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-1 rounded-full border border-red-200">
+                                  En juego / Terminado
+                                </span>
+                              )}
                             </div>
                             <span className="text-xs text-gray-400">
                               {formatearFecha(partido.fecha)}
@@ -911,13 +923,55 @@ export default function MiQuinela() {
                             </div>
                             
                             <div className="col-span-4 flex items-center justify-center gap-2">
-                              <div className="w-14 h-12 flex items-center justify-center text-lg font-bold bg-blue-50 rounded-lg">
-                                {pronosticos[partido.id]?.local ?? '-'}
-                              </div>
-                              <span className="text-xl font-bold w-4 text-center">-</span>
-                              <div className="w-14 h-12 flex items-center justify-center text-lg font-bold bg-blue-50 rounded-lg">
-                                {pronosticos[partido.id]?.visitante ?? '-'}
-                              </div>
+                              {partidoYaComenzo(partido.fecha) ? (
+                                <>
+                                  <div className="w-14 h-12 flex items-center justify-center text-lg font-bold bg-blue-50 rounded-lg">
+                                    {pronosticos[partido.id]?.local ?? '-'}
+                                  </div>
+                                  <span className="text-xl font-bold w-4 text-center">-</span>
+                                  <div className="w-14 h-12 flex items-center justify-center text-lg font-bold bg-blue-50 rounded-lg">
+                                    {pronosticos[partido.id]?.visitante ?? '-'}
+                                  </div>
+                                </>
+                              ) : (
+                                <>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    className="w-14 h-12 text-center text-lg font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                    value={pronosticos[partido.id]?.local ?? ''}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      actualizarPronostico(
+                                        partido.id, 
+                                        'local', 
+                                        value === "" ? null : parseInt(value, 10)
+                                      );
+                                    }}
+                                    onFocus={(e) => e.target.select()}
+                                    aria-label={`Goles de ${partido.club_a?.nombre || 'local'}`}
+                                    disabled={guardando[partido.id] || false}
+                                  />
+                                  <span className="text-xl font-bold w-4 text-center">-</span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    className="w-14 h-12 text-center text-lg font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                    value={pronosticos[partido.id]?.visitante ?? ''}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      actualizarPronostico(
+                                        partido.id, 
+                                        'visitante', 
+                                        value === "" ? null : parseInt(value, 10)
+                                      );
+                                    }}
+                                    onFocus={(e) => e.target.select()}
+                                    aria-label={`Goles de ${partido.club_b?.nombre || 'visitante'}`}
+                                    disabled={guardando[partido.id] || false}
+                                  />
+                                </>
+                              )}
                             </div>
                             
                             <div className="col-span-4 flex items-center gap-2">
@@ -933,6 +987,48 @@ export default function MiQuinela() {
                               />
                             </div>
                           </div>
+                          
+                          {!partidoYaComenzo(partido.fecha) && (
+                            <div className="mt-3 flex justify-end">
+                              <button
+                                onClick={() => {
+                                  // Actualizar pronosticosEditados con los valores actuales antes de guardar
+                                  setPronosticosEditados(prev => ({
+                                    ...prev,
+                                    [partido.id]: {
+                                      local: pronosticos[partido.id]?.local ?? null,
+                                      visitante: pronosticos[partido.id]?.visitante ?? null
+                                    }
+                                  }));
+                                  // Marcar cambios como pendientes
+                                  setCambiosPendientes(prev => ({
+                                    ...prev,
+                                    [partido.id]: true
+                                  }));
+                                  // Llamar a guardarPronostico después de actualizar el estado
+                                  setTimeout(() => guardarPronostico(partido.id), 0);
+                                }}
+                                disabled={guardando[partido.id]}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                  guardando[partido.id]
+                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                                }`}
+                              >
+                                {guardando[partido.id] ? (
+                                  <span className="flex items-center gap-2">
+                                    <FaSpinner className="animate-spin" />
+                                    Guardando...
+                                  </span>
+                                ) : (
+                                  <span className="flex items-center gap-2">
+                                    <FaSave />
+                                    Guardar cambios
+                                  </span>
+                                )}
+                              </button>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
