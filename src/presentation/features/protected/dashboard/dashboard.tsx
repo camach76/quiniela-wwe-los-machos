@@ -152,10 +152,21 @@ export default function Dashboard() {
   // Cargar ranking
   useEffect(() => {
     const fetchRanking = async () => {
+      // No intentar cargar si el usuario no está autenticado
+      if (!user) {
+        setTopJugadores([]);
+        setLoadingRanking(false);
+        return;
+      }
+
       try {
         setLoadingRanking(true);
-        const res = await fetch(`/api/ranking?userId=${user?.id || 'anonymous'}`);
+        const res = await fetch(`/api/ranking?userId=${user.id}`);
         const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data.error || 'Error al cargar el ranking');
+        }
         
         const top5 = data
           .sort((a: any, b: any) => b.puntos - a.puntos)
@@ -163,19 +174,20 @@ export default function Dashboard() {
           .map((j: any, i: number) => ({
             ...j,
             posicion: i + 1,
-            esUsuario: j.id === user?.id
+            esUsuario: j.id === user.id
           }));
           
         setTopJugadores(top5);
       } catch (error) {
         console.error('Error al cargar el ranking:', error);
+        // Opcional: Mostrar un mensaje de error al usuario
       } finally {
         setLoadingRanking(false);
       }
     };
 
     fetchRanking();
-  }, [user?.id]);
+  }, [user]); // Dependencia del objeto user completo, no solo del ID
 
   // Estadísticas del usuario (ejemplo)
   const estadisticas = {
@@ -278,10 +290,12 @@ export default function Dashboard() {
 
             {/* Ranking de jugadores */}
             <div className="bg-white/80 backdrop-blur-sm rounded-xl shadow-md p-5 border border-white/20">
-              <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <FaTrophy className="text-yellow-500" />
-                <span>Ranking</span>
-              </h2>
+              <div className="mb-4">
+                <h2 className="text-lg font-semibold text-gray-800 flex items-center justify-center gap-2">
+                  <FaTrophy className="text-yellow-500" />
+                  <span>Top 5 Jugadores</span>
+                </h2>
+              </div>
               {loadingRanking ? (
                 <div className="flex justify-center py-4">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -289,9 +303,15 @@ export default function Dashboard() {
               ) : (
                 <div className="space-y-3">
                   {topJugadores.map((jugador) => (
-                    <div key={jugador.id} className={`flex items-center justify-between p-2 rounded-lg ${
-                      jugador.esUsuario ? 'bg-blue-50 border border-blue-100' : 'bg-gray-50'
-                    }`}>
+                    <div key={jugador.id} 
+                      className={`flex items-center justify-between p-3 rounded-lg transition-all ${
+                        jugador.esUsuario 
+                          ? 'border-l-4 border-blue-500 pl-2.5 bg-blue-50/50'
+                          : 'bg-gray-50 hover:bg-gray-100 border-l-4 border-transparent pl-3'
+                      }`}>
+                      {jugador.esUsuario && (
+                        <div className="absolute -left-1 top-2 w-1 h-6 bg-blue-500 rounded-r"></div>
+                      )}
                       <div className="flex items-center gap-3">
                         <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
                           jugador.posicion === 1 
@@ -311,6 +331,14 @@ export default function Dashboard() {
                       <span className="font-semibold text-gray-700">{jugador.puntos} pts</span>
                     </div>
                   ))}
+                  <div className="pt-3 mt-3 border-t border-gray-100">
+                    <Link 
+                      href="/ranking"
+                      className="block w-full px-4 py-2 text-center bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-medium rounded-full hover:opacity-90 transition-opacity"
+                    >
+                      Ver ranking completo
+                    </Link>
+                  </div>
                 </div>
               )}
             </div>
