@@ -451,27 +451,33 @@ export default function MiQuinela() {
       return false;
     }
     
-    // Obtener los valores, asegurándose de que sean números o null
-    const local = typeof pronostico.local === 'number' ? pronostico.local : 
-                 (pronostico.local !== null && pronostico.local !== '' ? 
-                  parseInt(pronostico.local as string, 10) : null);
-    const visitante = typeof pronostico.visitante === 'number' ? pronostico.visitante : 
-                      (pronostico.visitante !== null && pronostico.visitante !== '' ? 
-                       parseInt(pronostico.visitante as string, 10) : null);
+    // Función para convertir valores a número o null
+    const parseScore = (value: any): number | null => {
+      if (value === null || value === undefined || value === '') {
+        return null;
+      }
+      const num = Number(value);
+      return isNaN(num) ? null : Math.max(0, Math.floor(num));
+    };
+    
+    // Obtener los valores convertidos
+    const local = parseScore(pronostico.local);
+    const visitante = parseScore(pronostico.visitante);
     
     console.log('Valores procesados para guardar:', { local, visitante });
     
     // Validar que ambos pronósticos tengan valor
     if (local === null || visitante === null) {
-      const errorMsg = `Debes ingresar un valor para ambos equipos (local: ${local}, visitante: ${visitante})`;
+      const errorMsg = `Debes ingresar un valor válido para ambos equipos`;
       console.error(errorMsg);
       setError(errorMsg);
       return false;
     }
     
-    // Validar que los valores sean números enteros no negativos
-    if (isNaN(local) || isNaN(visitante) || local < 0 || visitante < 0) {
-      const errorMsg = `Los goles deben ser números enteros no negativos (local: ${local}, visitante: ${visitante})`;
+    // Verificar si ya existe una apuesta para este partido y usuario
+    const matchId = parseInt(partidoId, 10);
+    if (isNaN(matchId)) {
+      const errorMsg = `ID de partido inválido: ${partidoId}`;
       console.error(errorMsg);
       setError(errorMsg);
       return false;
@@ -503,114 +509,95 @@ export default function MiQuinela() {
         throw new Error(errorMsg);
       }
       
-      // Usar el ID de usuario como parte del identificador de sesión
-      const sessionId = `${user.id}-${Date.now()}`;
-      console.log('Session ID generado:', sessionId);
+      // Verificar si ya existe un pronóstico para este partido
+      const existingBetResponse = await fetch(`/api/bets?matchId=${matchId}&userId=${user.id}`);
+      let response, responseData;
       
-      const requestBody = {
-        match_id: parseInt(partidoId, 10),
-        user_id: user.id,
-        session_id: sessionId,
-        prediccion_local: pronostico.local,
-        prediccion_visitante: pronostico.visitante,
-        puntos: 0,
-        created_at: new Date().toISOString()
-      };
-      
-      console.log('Enviando solicitud a /api/bets con:', requestBody);
-      
-      const response = await fetch('/api/bets', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
-      });
-      
-      const responseData = await response.json();
-      console.log('Respuesta del servidor:', responseData);
-      
-      if (!response.ok) {
-        const errorMsg = responseData.error || 'Error al guardar el pronóstico';
-        console.error('Error en la respuesta del servidor:', errorMsg);
-        throw new Error(errorMsg);
-      }
-      
-      console.log('Pronóstico guardado exitosamente, actualizando estado local...');
-      
-      // Actualizar el estado local con el nuevo pronóstico
-      setPronosticos(prev => ({
-        ...prev,
-        [partidoId]: {
-          local: pronostico.local,
-          visitante: pronostico.visitante
+      if (existingBetResponse.ok) {
+        const existingBet = await existingBetResponse.json();
+        
+        if (existingBet) {
+          // Actualizar pronóstico existente
+          console.log('Actualizando pronóstico existente:', existingBet.id);
+          response = await fetch(`/api/bets/${existingBet.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prediccion_a: local,
+              prediccion_b: visitante
+            })
+          });
+        } else {
+          // Crear nuevo pronóstico
+          console.log('Creando nuevo pronóstico');
+          response = await fetch('/api/bets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              match_id: matchId,
+              user_id: user.id,
+              prediccion_a: local,
+              prediccion_b: visitante,
+              puntos: 0
+            })
+          });
         }
-      }));
-      
-      console.log('Estado actualizado correctamente');
-      return true;
+        
+        responseData = await response.json();
+        console.log('Respuesta del servidor:', responseData);
+        
+        if (!response.ok) {
+          const errorMsg = responseData?.error || 'Error al guardar el pronóstico';
+          console.error('Error en la respuesta del servidor:', errorMsg);
+          throw new Error(errorMsg);
+        }
+        
+        console.log('Pronóstico guardado exitosamente, actualizando estado local...');
+        
+        // Actualizar el estado local con el nuevo pronóstico
+        setPronosticos(prev => ({
+          ...prev,
+          [partidoId]: {
+            local,
+            visitante
+          }
+        }));
+        
+        // Limpiar los cambios pendientes para este partido
+        setCambiosPendientes(prev => ({
+          ...prev,
+          [partidoId]: false
+        }));
+        
+        // Limpiar el estado de edición para este partido
+        setPronosticosEditados(prev => {
+          const newState = { ...prev };
+          delete newState[partidoId];
+          return newState;
+        });
+        
+        console.log('Estado actualizado correctamente');
+        return true;
+      } else {
+        throw new Error('No se pudo verificar el pronóstico existente');
+      }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Error desconocido al guardar el pronóstico';
       console.error('Error en guardarPronostico:', error);
       setError(errorMsg);
+      
+      // Limpiar el error después de 5 segundos
+      setTimeout(() => {
+        setError(null);
+      }, 5000);
+      
       return false;
     } finally {
-      console.log('Finalizando guardarPronostico');
+      // Restablecer el estado de guardado
       setGuardando(prev => ({
         ...prev,
         [partidoId]: false
       }));
-    }
-  };
-  
-  const guardarPronosticos = async () => {
-    if (Object.keys(pronosticos).length === 0) {
-      alert("No hay pronósticos para guardar");
-      return;
-    }
-
-    setCargando(true);
-    
-    try {
-      // Guardar cada pronóstico individualmente
-      const resultados = await Promise.allSettled(
-        Object.entries(pronosticosEditados).map(([partidoId, pronostico]) => 
-          guardarPronostico(partidoId)
-        )
-      );
-      
-      // Verificar si hubo algún error
-      const errores = resultados.filter(
-        (result): result is PromiseRejectedResult => result.status === 'rejected'
-      );
-      
-      if (errores.length > 0) {
-        console.error('Errores al guardar pronósticos:', errores);
-        throw new Error('Algunos pronósticos no se pudieron guardar');
-      }
-      
-      // Mostrar mensaje de éxito
-      alert("¡Tus pronósticos se han guardado correctamente!");
-      
-    } catch (error: unknown) {
-      let errorMessage = 'No se pudieron guardar los pronósticos. Intenta de nuevo más tarde.';
-      
-      if (error instanceof Error) {
-        console.error("Error al guardar pronósticos:", error);
-        errorMessage = error.message || errorMessage;
-      } else if (typeof error === 'string') {
-        console.error("Error al guardar pronósticos:", error);
-        errorMessage = error;
-      } else {
-        console.error("Error desconocido al guardar pronósticos:", error);
-      }
-      
-      setError(`Error al guardar: ${errorMessage}`);
-      
-      // Mostrar notificación de error
-      alert(`Error: ${errorMessage}`);
-    } finally {
-      setCargando(false);
     }
   };
 
@@ -743,10 +730,26 @@ export default function MiQuinela() {
 
           {tabActiva === "pendientes" && (
             <button
-              onClick={guardarPronosticos}
-              disabled={Object.keys(pronosticos).length === 0 || Object.values(guardando).some(v => v)}
+              onClick={() => {
+                // Guardar todos los pronósticos con cambios pendientes
+                const promises = Object.entries(pronosticosEditados).map(([partidoId]) => 
+                  guardarPronostico(partidoId)
+                );
+                
+                Promise.allSettled(promises)
+                  .then(results => {
+                    const errores = results.filter(r => r.status === 'rejected');
+                    if (errores.length > 0) {
+                      console.error('Algunos pronósticos no se pudieron guardar:', errores);
+                      setError('Algunos pronósticos no se pudieron guardar. Por favor, inténtalo de nuevo.');
+                    } else {
+                      console.log('Todos los pronósticos se guardaron correctamente');
+                    }
+                  });
+              }}
+              disabled={Object.keys(pronosticosEditados).length === 0 || Object.values(guardando).some(v => v)}
               className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                Object.keys(pronosticos).length === 0 || Object.values(guardando).some(v => v)
+                Object.keys(pronosticosEditados).length === 0 || Object.values(guardando).some(v => v)
                   ? 'bg-gray-300 cursor-not-allowed text-gray-500'
                   : 'bg-green-600 hover:bg-green-700 text-white'
               }`}

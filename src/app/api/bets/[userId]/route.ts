@@ -2,13 +2,17 @@ import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { SupabaseBetRepository } from "@/backend/core/infra/repositories/SupabaseBetRepository";
 
+// Configuración para forzar renderizado dinámico
 export const dynamic = "force-dynamic";
+
+export const dynamicParams = true; // Habilita la generación de rutas dinámicas en el servidor
 
 export async function GET(
   request: Request,
   { params }: { params: { userId: string } }
 ) {
   try {
+    // Obtener el userId de los parámetros de la ruta
     const userId = params.userId;
     if (!userId) {
       return NextResponse.json(
