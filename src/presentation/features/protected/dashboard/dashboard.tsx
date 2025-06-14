@@ -497,63 +497,88 @@ export default function Dashboard() {
                     {proximosPartidos.map((partido) => (
                       <div
                         key={partido.id}
-                        className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow"
+                        className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100 hover:shadow-lg transition-all duration-300"
                       >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-medium text-gray-500">
-                            {partido.competicion}
-                          </span>
-                          <span className="text-xs font-medium text-gray-500">
-                            {partido.fecha} • {partido.hora}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-3 flex-1 justify-end">
-                              <div className="w-10 h-10 flex items-center justify-center">
+                        <div className="p-4">
+                          {/* Encabezado - Competición y Fecha */}
+                          <div className="flex items-center justify-between mb-4">
+                            <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-full">
+                              {partido.competicion}
+                            </span>
+                            <div className="text-xs text-gray-500 flex items-center gap-1">
+                              <FaCalendarAlt className="text-xs" />
+                              <span>{partido.fecha} • {partido.hora}</span>
+                            </div>
+                          </div>
+                          
+                          {/* Equipos */}
+                          <div className="grid grid-cols-12 gap-2 items-center mb-4">
+                            {/* Equipo Local */}
+                            <div className="col-span-5 flex flex-col items-end">
+                              <div className="text-sm font-medium text-right">
+                                {partido.local.nombre}
+                              </div>
+                              <div className="w-12 h-12 flex items-center justify-center">
                                 <Image
-                                  className="object-contain"
-                                  src={partido.local.logo || "/placeholder.svg"}
+                                  src={partido.local.logo || "/logo.png"}
                                   alt={partido.local.nombre}
-                                  width={40}
-                                  height={40}
+                                  width={48}
+                                  height={48}
+                                  className="object-contain"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = '/logo.png';
+                                  }}
                                 />
                               </div>
-                              <span className="font-medium text-right">
-                                {partido.local.nombre}
-                              </span>
                             </div>
-                            <span className="text-xs font-bold bg-gray-100 px-2 py-1 rounded">
-                              VS
-                            </span>
-                            <div className="flex items-center gap-3 flex-1">
-                              <span className="font-medium">
+                            
+                            {/* VS */}
+                            <div className="col-span-2 flex flex-col items-center justify-center">
+                              <div className="text-xs font-bold bg-gray-100 text-gray-600 w-8 h-8 rounded-full flex items-center justify-center">
+                                VS
+                              </div>
+                            </div>
+                            
+                            {/* Equipo Visitante */}
+                            <div className="col-span-5 flex flex-col items-start">
+                              <div className="text-sm font-medium">
                                 {partido.visitante.nombre}
-                              </span>
-                              <div className="w-10 h-10 flex items-center justify-center">
+                              </div>
+                              <div className="w-12 h-12 flex items-center justify-center">
                                 <Image
-                                  className="object-contain"
-                                  src={
-                                    partido.visitante.logo || "/placeholder.svg"
-                                  }
+                                  src={partido.visitante.logo || "/logo.png"}
                                   alt={partido.visitante.nombre}
-                                  width={40}
-                                  height={40}
+                                  width={48}
+                                  height={48}
+                                  className="object-contain"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = '/logo.png';
+                                  }}
                                 />
                               </div>
                             </div>
                           </div>
-                        </div>
-                        <div className="mt-3 flex justify-between items-center">
-                          <span className="text-xs text-gray-500">
-                            {partido.estadio}
-                          </span>
-                          <Link
-                            href={`/pronostico/${partido.id}`}
-                            className="text-sm bg-blue-600 text-white px-3 py-1 rounded-full hover:bg-blue-700 transition-colors"
-                          >
-                            Pronosticar
-                          </Link>
+                          
+                          {/* Estadio */}
+                          <div className="text-xs text-gray-500 text-center mb-3 flex items-center justify-center gap-1">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <span>{partido.estadio}</span>
+                          </div>
+                          
+                          {/* Botón de pronóstico */}
+                          <div className="flex justify-center">
+                            <Link
+                              href={`/pronostico/${partido.id}`}
+                              className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white font-medium py-2 px-4 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 text-center"
+                            >
+                              Hacer Pronóstico
+                            </Link>
+                          </div>
                         </div>
                       </div>
                     ))}

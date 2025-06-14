@@ -29,17 +29,49 @@ export async function GET() {
     }
 
     const formattedMatches = await Promise.all(matches.map(async (match) => {
+      // Obtener detalles del club local con los campos necesarios
       const { data: clubA } = await supabase
         .from('clubs')
-        .select('*')
+        .select('id, nombre, logo_url, pais')
         .eq('id', match.club_a_id)
         .single();
       
+      // Obtener detalles del club visitante con los campos necesarios
       const { data: clubB } = await supabase
         .from('clubs')
-        .select('*')
+        .select('id, nombre, logo_url, pais')
         .eq('id', match.club_b_id)
         .single();
+
+      // Crear objeto de club local con valores por defecto
+      const equipoLocal = clubA 
+        ? { 
+            id: clubA.id, 
+            nombre: clubA.nombre, 
+            logo: clubA.logo_url,
+            pais: clubA.pais
+          } 
+        : { 
+            id: match.club_a_id, 
+            nombre: 'Equipo Desconocido',
+            logo: '/placeholder.svg',
+            pais: 'País desconocido'
+          };
+
+      // Crear objeto de club visitante con valores por defecto
+      const equipoVisitante = clubB 
+        ? { 
+            id: clubB.id, 
+            nombre: clubB.nombre, 
+            logo: clubB.logo_url,
+            pais: clubB.pais
+          } 
+        : { 
+            id: match.club_b_id, 
+            nombre: 'Equipo Desconocido',
+            logo: '/placeholder.svg',
+            pais: 'País desconocido'
+          };
 
       return {
         id: match.id,
@@ -50,8 +82,8 @@ export async function GET() {
         resultadoA: match.resultado_a,
         resultadoB: match.resultado_b,
         createdAt: match.created_at,
-        club_a: clubA || { id: match.club_a_id, nombre: 'Equipo Desconocido' },
-        club_b: clubB || { id: match.club_b_id, nombre: 'Equipo Desconocido' },
+        club_a: equipoLocal,
+        club_b: equipoVisitante
       };
     }));
 
