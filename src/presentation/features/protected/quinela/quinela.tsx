@@ -9,6 +9,7 @@ import {
   FaBell,
   FaFutbol,
   FaCheck,
+  FaCheckCircle,
   FaCalendarAlt,
   FaHistory,
   FaChevronDown,
@@ -44,6 +45,8 @@ export default function MiQuinela() {
   const [jornadas, setJornadas] = useState<Record<string, boolean>>({});
   const { matches: partidos, loading: cargandoPartidos, error: errorApi } = useUpcomingMatches();
   const [partidosPendientes, setPartidosPendientes] = useState<PartidoConJornada[]>([]);
+  const [partidosPronosticados, setPartidosPronosticados] = useState<PartidoConJornada[]>([]);
+  const [partidosCompletados, setPartidosCompletados] = useState<PartidoConJornada[]>([]);
   
   // Estados para manejar los pronósticos
   const [pronosticos, setPronosticos] = useState<Record<string, Pronostico>>({});
@@ -163,15 +166,40 @@ export default function MiQuinela() {
         };
       });
 
-      setPartidosPendientes(partidosProcesados);
-      const jornadasTemp: Record<string, boolean> = {};
+      // Separar partidos en categorías
+      const pendientes: PartidoConJornada[] = [];
+      const pronosticados: PartidoConJornada[] = [];
+      const completados: PartidoConJornada[] = [];
+      
       partidosProcesados.forEach(partido => {
-        if (partido.jornada) {
-          jornadasTemp[partido.jornada] = true;
+        const pronosticoExistente = pronosticos[partido.id];
+        const partidoTerminado = partido.status === 'FINISHED' || partido.status === 'IN_PLAY' || partido.status === 'PAUSED';
+        const tienePronostico = pronosticoExistente && 
+          (pronosticoExistente.local !== null || pronosticoExistente.visitante !== null);
+        
+        if (partidoTerminado) {
+          completados.push(partido);
+        } else if (tienePronostico) {
+          pronosticados.push(partido);
+        } else {
+          pendientes.push(partido);
         }
       });
       
-      setJornadas(jornadasTemp);
+      setPartidosPendientes(pendientes);
+      setPartidosPronosticados(pronosticados);
+      setPartidosCompletados(completados);
+      
+      // Actualizar jornadas para cada categoría
+      const actualizarJornadas = (partidos: PartidoConJornada[]) => {
+        const tempJornadas: Record<string, boolean> = {};
+        partidos.forEach(p => {
+          if (p.jornada) tempJornadas[p.jornada] = true;
+        });
+        return tempJornadas;
+      };
+      
+      setJornadas(actualizarJornadas(pendientes));
     }
   }, [partidos]);
 
@@ -708,8 +736,8 @@ export default function MiQuinela() {
         {tabActiva === "pendientes" && (
           <div className="space-y-4">
             {Object.entries(jornadas).map(([jornada, abierta]) => {
-              const partidosJornada = partidosPendientes.filter(p => p.jornada === jornada)
-              if (partidosJornada.length === 0) return null
+              const partidosJornada = partidosPendientes.filter(p => p.jornada === jornada);
+              if (partidosJornada.length === 0) return null;
               
               return (
                 <div
@@ -739,11 +767,13 @@ export default function MiQuinela() {
                     <div className="divide-y divide-gray-100">
                       {partidosJornada.map(partido => (
                         <div key={partido.id} className="p-4 hover:bg-gray-50 transition-colors">
-                          <div className="flex justify-between items-center mb-3">
-                            <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                              {partido.competicion}
-                            </span>
-                            <span className="text-xs font-medium text-gray-500">
+                          <div className="flex flex-col items-center mb-3">
+                            <div className="flex justify-center w-full mb-1">
+                              <span className="text-xs font-medium text-gray-600 bg-gray-50 px-3 py-1 rounded-full border border-gray-200 shadow-sm">
+                                {partido.competicion}
+                              </span>
+                            </div>
+                            <span className="text-xs text-gray-400">
                               {formatearFecha(partido.fecha)}
                             </span>
                           </div>
@@ -824,6 +854,92 @@ export default function MiQuinela() {
                 </div>
               )
             })}
+          </div>
+        )}
+
+        {tabActiva === "pronosticados" && (
+          <div className="space-y-4">
+            {partidosPronosticados.length === 0 ? (
+              <div className="bg-white rounded-lg shadow-sm p-6 text-center text-gray-500">
+                <FaCheckCircle className="mx-auto text-gray-300 text-4xl mb-3" />
+                <p>No hay partidos pronosticados</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {Object.entries(partidosPronosticados.reduce((acc, partido) => {
+                  if (!acc[partido.jornada]) {
+                    acc[partido.jornada] = [];
+                  }
+                  acc[partido.jornada].push(partido);
+                  return acc;
+                }, {} as Record<string, PartidoConJornada[]>)).map(([jornada, partidosJornada]) => (
+                  <div key={jornada} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div 
+                      className="bg-gray-50 px-4 py-3 cursor-pointer"
+                      onClick={() => toggleJornada(jornada)}
+                      aria-expanded={jornadas[jornada]}
+                    >
+                      <h3 className="font-semibold text-gray-800">
+                        {jornada}
+                      </h3>
+                    </div>
+                    <div className="divide-y divide-gray-100">
+                      {partidosJornada.map(partido => (
+                        <div key={partido.id} className="p-4 hover:bg-gray-50 transition-colors">
+                          <div className="flex flex-col items-center mb-3">
+                            <div className="flex justify-center w-full mb-1">
+                              <span className="text-xs font-medium text-gray-600 bg-gray-50 px-3 py-1 rounded-full border border-gray-200 shadow-sm">
+                                {partido.competicion}
+                              </span>
+                            </div>
+                            <span className="text-xs text-gray-400">
+                              {formatearFecha(partido.fecha)}
+                            </span>
+                          </div>
+                          
+                          <div className="grid grid-cols-12 gap-2 items-center">
+                            <div className="col-span-4 flex items-center gap-2 justify-end">
+                              <TeamLogo 
+                                name={partido.club_a?.nombre || 'Local'}
+                                logoUrl={partido.club_a?.logo}
+                                bgColor={partido.club_a?.color}
+                                size={40}
+                              />
+                              <span className="font-medium text-gray-800 truncate">
+                                {partido.club_a?.nombre || 'Local'}
+                              </span>
+                            </div>
+                            
+                            <div className="col-span-4 flex items-center justify-center gap-2">
+                              <div className="w-14 h-12 flex items-center justify-center text-lg font-bold bg-blue-50 rounded-lg">
+                                {pronosticos[partido.id]?.local ?? '-'}
+                              </div>
+                              <span className="text-xl font-bold w-4 text-center">-</span>
+                              <div className="w-14 h-12 flex items-center justify-center text-lg font-bold bg-blue-50 rounded-lg">
+                                {pronosticos[partido.id]?.visitante ?? '-'}
+                              </div>
+                            </div>
+                            
+                            <div className="col-span-4 flex items-center gap-2">
+                              <span className="font-medium text-gray-800 truncate text-right">
+                                {partido.club_b?.nombre || 'Visitante'}
+                              </span>
+                              <TeamLogo 
+                                name={partido.club_b?.nombre || 'Visitante'}
+                                logoUrl={partido.club_b?.logo}
+                                bgColor={partido.club_b?.color}
+                                size={40}
+                                className="flex-shrink-0"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </main>
