@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { TeamLogo } from "@/presentation/components/TeamLogo"
 import { 
   FaSignOutAlt,
   FaBell,
@@ -747,29 +748,26 @@ export default function MiQuinela() {
                             </span>
                           </div>
                           
-                          <div className="flex items-center justify-between">
+                          <div className="grid grid-cols-12 gap-2 items-center">
                             {/* Equipo Local */}
-                            <div className="flex-1 flex items-center gap-3">
-                              <div className="relative w-12 h-12 flex-shrink-0">
-                                <div 
-                                  className="absolute inset-0 rounded-full" 
-                                  style={{ backgroundColor: partido.club_a?.color || '#e5e7eb' }}
-                                ></div>
-                                <Image
-                                  src={partido.club_a?.logo || "/placeholder.svg"}
-                                  alt={partido.club_a?.nombre || 'Equipo local'}
-                                  width={48}
-                                  height={48}
-                                  className="relative z-10 object-contain p-1"
-                                />
-                              </div>
-                              <span className="font-medium text-gray-800">
+                            <div className="col-span-4 flex items-center gap-2 justify-end">
+                              <TeamLogo 
+                                name={partido.club_a?.nombre || 'Local'}
+                                logoUrl={partido.club_a?.logo}
+                                bgColor={partido.club_a?.color}
+                                size={40}
+                              />
+                              <span className="font-medium text-gray-800 truncate">
                                 {partido.club_a?.nombre || 'Local'}
                               </span>
+                            </div>
+                            
+                            {/* Inputs de goles */}
+                            <div className="col-span-4 flex items-center justify-center gap-2">
                               <input
                                 type="number"
                                 min="0"
-                                className="w-14 h-14 text-center text-xl font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                className="w-14 h-12 text-center text-lg font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 value={pronosticos[partido.id]?.local ?? ""}
                                 onChange={(e) => {
                                   const value = e.target.value;
@@ -783,15 +781,13 @@ export default function MiQuinela() {
                                 aria-label={`Goles de ${partido.club_a?.nombre || 'local'}`}
                                 disabled={guardando[partido.id] || false}
                               />
-                            </div>
-
-                            <div className="text-xl font-bold mx-2">-</div>
-
-                            <div className="flex-1 flex items-center gap-3">
+                              
+                              <span className="text-xl font-bold w-4 text-center">-</span>
+                              
                               <input
                                 type="number"
                                 min="0"
-                                className="w-14 h-14 text-center text-xl font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                className="w-14 h-12 text-center text-lg font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 value={pronosticos[partido.id]?.visitante ?? ""}
                                 onChange={(e) => {
                                   const value = e.target.value;
@@ -806,25 +802,19 @@ export default function MiQuinela() {
                                 disabled={guardando[partido.id] || false}
                               />
                             </div>
-
+                            
                             {/* Equipo Visitante */}
-                            <div className="flex-1 flex items-center gap-3 justify-end">
-                              <span className="font-medium text-gray-800 text-right">
+                            <div className="col-span-4 flex items-center gap-2">
+                              <span className="font-medium text-gray-800 truncate text-right">
                                 {partido.club_b?.nombre || 'Visitante'}
                               </span>
-                              <div className="relative w-12 h-12 flex-shrink-0">
-                                <div 
-                                  className="absolute inset-0 rounded-full" 
-                                  style={{ backgroundColor: partido.club_b?.color || '#e5e7eb' }}
-                                ></div>
-                                <Image
-                                  src={partido.club_b?.logo || "/placeholder.svg"}
-                                  alt={partido.club_b?.nombre || 'Equipo visitante'}
-                                  width={48}
-                                  height={48}
-                                  className="relative z-10 object-contain p-1"
-                                />
-                              </div>
+                              <TeamLogo 
+                                name={partido.club_b?.nombre || 'Visitante'}
+                                logoUrl={partido.club_b?.logo}
+                                bgColor={partido.club_b?.color}
+                                size={40}
+                                className="flex-shrink-0"
+                              />
                             </div>
                           </div>
                         </div>
