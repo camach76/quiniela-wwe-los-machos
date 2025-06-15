@@ -12,7 +12,7 @@ export class SupabaseBetRepository implements BetRepository {
       match_id: input.matchId,
       prediccion_a: input.prediccionA,
       prediccion_b: input.prediccionB,
-      puntos_obtenidos: 0
+      puntos_obtenidos: 0,
     };
 
     const { data, error } = await this.supabase
@@ -20,9 +20,9 @@ export class SupabaseBetRepository implements BetRepository {
       .insert([betData])
       .select()
       .single();
-      
+
     if (error) throw new Error(error.message);
-    
+
     // Mapear de vuelta al formato de la entidad
     return {
       id: data.id,
@@ -32,7 +32,7 @@ export class SupabaseBetRepository implements BetRepository {
       prediccionB: data.prediccion_b,
       puntosObtenidos: data.puntos_obtenidos,
       createdAt: data.created_at,
-      updatedAt: data.updated_at
+      updatedAt: data.updated_at,
     };
   }
 
@@ -40,7 +40,7 @@ export class SupabaseBetRepository implements BetRepository {
     const betData = {
       prediccion_a: bet.prediccionA,
       prediccion_b: bet.prediccionB,
-      puntos_obtenidos: bet.puntosObtenidos
+      puntos_obtenidos: bet.puntosObtenidos,
     };
 
     const { data, error } = await this.supabase
@@ -49,9 +49,9 @@ export class SupabaseBetRepository implements BetRepository {
       .eq("id", bet.id)
       .select()
       .single();
-      
+
     if (error) throw new Error(error.message);
-    
+
     // Mapear de vuelta al formato de la entidad
     return {
       id: data.id,
@@ -61,7 +61,29 @@ export class SupabaseBetRepository implements BetRepository {
       prediccionB: data.prediccion_b,
       puntosObtenidos: data.puntos_obtenidos,
       createdAt: data.created_at,
-      updatedAt: data.updated_at
+      updatedAt: data.updated_at,
+    };
+  }
+
+  async getById(betId: string): Promise<Bet | null> {
+    const { data, error } = await this.supabase
+      .from("bets")
+      .select("*")
+      .eq("id", betId)
+      .single();
+
+    if (error) throw new Error(error.message);
+    if (!data) return null;
+
+    return {
+      id: data.id,
+      userId: data.user_id,
+      matchId: data.match_id,
+      prediccionA: data.prediccion_a,
+      prediccionB: data.prediccion_b,
+      puntosObtenidos: data.puntos_obtenidos,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
     };
   }
 
@@ -70,9 +92,9 @@ export class SupabaseBetRepository implements BetRepository {
       .from("bets")
       .select("*")
       .eq("user_id", userId);
-      
+
     if (error) throw new Error(error.message);
-    
+
     // Mapear los datos al formato de la entidad
     return data.map((bet: any) => ({
       id: bet.id,
@@ -82,7 +104,7 @@ export class SupabaseBetRepository implements BetRepository {
       prediccionB: bet.prediccion_b,
       puntosObtenidos: bet.puntos_obtenidos,
       createdAt: bet.created_at,
-      updatedAt: bet.updated_at
+      updatedAt: bet.updated_at,
     }));
   }
 
@@ -97,16 +119,17 @@ export class SupabaseBetRepository implements BetRepository {
         .eq("match_id", matchId)
         .eq("user_id", userId)
         .single();
-        
+
       if (error) {
-        if (error.code === 'PGRST116') { // Código para "no se encontró ningún resultado"
+        if (error.code === "PGRST116") {
+          // Código para "no se encontró ningún resultado"
           return null;
         }
         throw error;
       }
-      
+
       if (!data) return null;
-    
+
       // Mapear los datos al formato de la entidad
       return {
         id: data.id,
@@ -116,10 +139,10 @@ export class SupabaseBetRepository implements BetRepository {
         prediccionB: data.prediccion_b,
         puntosObtenidos: data.puntos_obtenidos,
         createdAt: data.created_at,
-        updatedAt: data.updated_at
+        updatedAt: data.updated_at,
       };
     } catch (error) {
-      console.error('Error en getByMatchAndUser:', error);
+      console.error("Error en getByMatchAndUser:", error);
       throw error;
     }
   }

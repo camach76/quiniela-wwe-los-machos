@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { FaFutbol, FaBell, FaSignOutAlt } from 'react-icons/fa';
 import { getClubRanking } from '@/lib/api';
+import { TeamLogo } from '@/presentation/components/TeamLogo';
 
 export default function TablaRankingClubes() {
   const [ranking, setRanking] = useState([]);
@@ -23,10 +23,9 @@ export default function TablaRankingClubes() {
         <div className="flex items-center gap-3">
           <Link href="/dashboard" className="flex items-center gap-3">
             <div className="relative w-10 h-10">
-              <Image
+              <img
                 src="/images/logo.png"
                 alt="Logo"
-                fill
                 className="object-contain"
               />
             </div>
@@ -72,12 +71,10 @@ export default function TablaRankingClubes() {
                 <tr key={item.club.id} className="border-b">
                   <td className="p-2">{idx + 1}</td>
                   <td className="p-2">
-                    <Image
-                      src={item.club.logo_url || '/placeholder.svg'}
-                      alt={item.club.nombre}
-                      width={32}
-                      height={32}
-                      className="rounded-full"
+                    <TeamLogo 
+                      name={item.club.nombre}
+                      logoUrl={item.club.logo_url}
+                      size={32}
                     />
                   </td>
                   <td className="p-2">{item.club.nombre}</td>

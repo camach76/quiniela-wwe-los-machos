@@ -10,8 +10,6 @@ export async function middleware(request: NextRequest) {
   const {
     data: { session },
   } = await supabase.auth.getSession();
-
-  // Aquí validamos la sesión usando tu authGuard
   return authGuard(request, session) || response;
 }
 
