@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useUserSession } from "@/presentation/hooks/useUserSession";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { toast } from "react-hot-toast";
-import { Navbar } from "@/presentation/components/navbar/navbar";
 import { Estadisticas } from "@/presentation/components/estadisticas/estadisticas";
 import { MinRanking } from "@/presentation/components/ranking/min-ranking";
 import { AccesosRapidos } from "@/presentation/components/fastAcces/fastAcces";
@@ -59,7 +58,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-100">
-      <Navbar appName="Quiniela WWE Los Machos" />
       <main className="w-full px-4 lg:px-6 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Columna izquierda - Estadísticas y accesos rápidos */}

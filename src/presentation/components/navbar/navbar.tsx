@@ -15,7 +15,7 @@ interface NavbarProps {
 }
 
 export const Navbar = ({
-  appName = "Quiniela WWE",
+  appName = "Quiniela Los Machos",
   logoUrl = "/images/logo.png",
   showNotifications = true,
   className = "",
