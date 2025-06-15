@@ -1,43 +1,165 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
-
-# dependencies
+# Dependencias
 /node_modules
 /.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+.pnp.js
 
-# testing
+# Testing
 /coverage
 
-# next.js
+# Next.js
 /.next/
 /out/
 
-# production
+# Producción
 /build
 
-# misc
+# Misc
 .DS_Store
 *.pem
 
-# debug
+# Debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# Local env files
+.env*.local
+.env
 
-# vercel
+# Vercel
 .vercel
 
-# typescript
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDE / Editor
+.idea
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Archivos de sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de entorno local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Archivos de caché
+.cache/
+.temp/
+.tmp/
+
+# Logs
+logs
+*.log
+
+# Testing
+/coverage
+
+# Archivos de configuración local
+*.local.*
+
+# Archivos de configuración de IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Archivos temporales
+.temp/
+.tmp/
+
+# Archivos de configuración personalizados
+*.local
+
+# Archivos de configuración de paquetes
+.eslintcache
+.stylelintcache
+.cache/
+.parcel-cache/
+
+# Archivos de configuración de Docker
+.docker/
+
+# Archivos de configuración de Windows
+[Ww]eb-[Ww]orker.js.+
+
+# Archivos de configuración de macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Archivos de configuración de Linux
+*~
+
+# Archivos de configuración de Windows
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
+
+# Archivos de configuración de Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Archivos de configuración de WebStorm
+.idea/
+*.iml
+
+# Archivos de configuración de Vim
+*.swp
+*.swo
+*~
+
+# Archivos de configuración de Emacs
+*~
+\#*\#
+/.\#*
+
+# Archivos de configuración de IntelliJ
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Archivos de configuración de Visual Studio
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+
+# Archivos de configuración de Eclipse
+.settings/
+.classpath
+.project
+
+# Archivos de configuración de NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Archivos de configuración de Vim
+*.swp
+*.swo
+*~
 
 /src/generated/prisma
