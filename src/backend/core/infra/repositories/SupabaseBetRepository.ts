@@ -10,26 +10,27 @@ export class SupabaseBetRepository implements BetRepository {
     const betData = {
       user_id: input.userId,
       match_id: input.matchId,
-      prediccion_a: input.prediccionA,
-      prediccion_b: input.prediccionB,
+      prediccion_a: input.prediccion_a,
+      prediccion_b: input.prediccion_b,
       puntos_obtenidos: 0,
     };
 
     const { data, error } = await this.supabase
       .from("bets")
       .insert([betData])
-      .select()
+      .select(
+        "id, user_id, match_id, prediccion_a, prediccion_b, puntos_obtenidos, created_at, updated_at",
+      )
       .single();
 
     if (error) throw new Error(error.message);
 
-    // Mapear de vuelta al formato de la entidad
     return {
       id: data.id,
       userId: data.user_id,
       matchId: data.match_id,
-      prediccionA: data.prediccion_a,
-      prediccionB: data.prediccion_b,
+      prediccion_a: data.prediccion_a,
+      prediccion_b: data.prediccion_b,
       puntosObtenidos: data.puntos_obtenidos,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
@@ -38,8 +39,8 @@ export class SupabaseBetRepository implements BetRepository {
 
   async update(bet: Bet): Promise<Bet> {
     const betData = {
-      prediccion_a: bet.prediccionA,
-      prediccion_b: bet.prediccionB,
+      prediccion_a: bet.prediccion_a,
+      prediccion_b: bet.prediccion_b,
       puntos_obtenidos: bet.puntosObtenidos,
     };
 
@@ -47,18 +48,19 @@ export class SupabaseBetRepository implements BetRepository {
       .from("bets")
       .update(betData)
       .eq("id", bet.id)
-      .select()
+      .select(
+        "id, user_id, match_id, prediccion_a, prediccion_b, puntos_obtenidos, created_at, updated_at",
+      )
       .single();
 
     if (error) throw new Error(error.message);
 
-    // Mapear de vuelta al formato de la entidad
     return {
       id: data.id,
       userId: data.user_id,
       matchId: data.match_id,
-      prediccionA: data.prediccion_a,
-      prediccionB: data.prediccion_b,
+      prediccion_a: data.prediccion_a,
+      prediccion_b: data.prediccion_b,
       puntosObtenidos: data.puntos_obtenidos,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
@@ -68,7 +70,9 @@ export class SupabaseBetRepository implements BetRepository {
   async getById(betId: string): Promise<Bet | null> {
     const { data, error } = await this.supabase
       .from("bets")
-      .select("*")
+      .select(
+        "id, user_id, match_id, prediccion_a, prediccion_b, puntos_obtenidos, created_at, updated_at",
+      )
       .eq("id", betId)
       .single();
 
@@ -79,8 +83,8 @@ export class SupabaseBetRepository implements BetRepository {
       id: data.id,
       userId: data.user_id,
       matchId: data.match_id,
-      prediccionA: data.prediccion_a,
-      prediccionB: data.prediccion_b,
+      prediccion_a: data.prediccion_a,
+      prediccion_b: data.prediccion_b,
       puntosObtenidos: data.puntos_obtenidos,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
@@ -88,14 +92,16 @@ export class SupabaseBetRepository implements BetRepository {
   }
 
   async getByUser(userId: string): Promise<Bet[]> {
+    console.log("🧪 userId:", userId);
     const { data, error } = await this.supabase
       .from("bets")
-      .select("*")
+      .select(
+        "id, user_id, match_id, prediccion_a, prediccion_b, puntos_obtenidos, created_at, updated_at",
+      )
       .eq("user_id", userId);
 
     if (error) throw new Error(error.message);
 
-    // Mapear los datos al formato de la entidad
     return data.map((bet: any) => ({
       id: bet.id,
       userId: bet.user_id,
@@ -115,28 +121,28 @@ export class SupabaseBetRepository implements BetRepository {
     try {
       const { data, error } = await this.supabase
         .from("bets")
-        .select("*")
+        .select(
+          "id, user_id, match_id, prediccion_a, prediccion_b, puntos_obtenidos, created_at, updated_at",
+        )
         .eq("match_id", matchId)
         .eq("user_id", userId)
         .single();
 
       if (error) {
         if (error.code === "PGRST116") {
-          // Código para "no se encontró ningún resultado"
-          return null;
+          return null; // sin resultados
         }
         throw error;
       }
 
       if (!data) return null;
 
-      // Mapear los datos al formato de la entidad
       return {
         id: data.id,
         userId: data.user_id,
         matchId: data.match_id,
-        prediccionA: data.prediccion_a,
-        prediccionB: data.prediccion_b,
+        prediccion_a: data.prediccion_a,
+        prediccion_b: data.prediccion_b,
         puntosObtenidos: data.puntos_obtenidos,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
