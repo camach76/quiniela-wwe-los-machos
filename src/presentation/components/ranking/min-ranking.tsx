@@ -1,56 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { FaTrophy, FaChevronRight } from 'react-icons/fa';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { toast } from 'react-hot-toast';
 import { useUserSession } from '@/presentation/hooks/useUserSession';
+import { useRanking } from '@/presentation/hooks/useRanking';
 import Link from 'next/link';
 
-interface JugadorRanking {
-  id: string;
-  nombre: string;
-  puntos: number;
-}
-
 export const MinRanking: React.FC = () => {
-  const [topJugadores, setTopJugadores] = useState<JugadorRanking[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { topJugadores, loading, error } = useRanking(5);
   const { user } = useUserSession();
-  const supabase = createClientComponentClient();
 
-  useEffect(() => {
-    const fetchRanking = async () => {
-      try {
-        setLoading(true);
-        
-        // Primero intentamos con la tabla profiles
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('id, username, puntos')
-          .order('puntos', { ascending: false })
-          .limit(5);
-
-        if (error) {
-          throw error;
-        }
-
-        // Mapeamos los datos al formato esperado
-        const jugadores = (data || []).map((jugador: any) => ({
-          id: jugador.id,
-          nombre: jugador.username || 'Usuario',
-          puntos: jugador.puntos || 0
-        }));
-
-        setTopJugadores(jugadores);
-      } catch (error) {
-        console.error('Error al cargar el ranking:', error);
-        toast.error('No se pudo cargar el ranking');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchRanking();
-  }, [supabase]);
+  // Mostrar mensaje de error si hay algún problema
+  React.useEffect(() => {
+    if (error) {
+      console.error('Error en MinRanking:', error);
+      toast.error('No se pudo cargar el ranking');
+    }
+  }, [error]);
 
   if (loading) {
     return (

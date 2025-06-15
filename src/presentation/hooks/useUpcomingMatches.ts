@@ -1,4 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { getCachedData, setCachedData, clearCachedData } from '@/presentation/utils/storage';
+
+const UPCOMING_MATCHES_CACHE_KEY = 'quiniela-upcoming-matches-cache';
 
 interface Club {
   id: number;
@@ -20,7 +23,12 @@ interface Match {
 }
 
 export const useUpcomingMatches = (filterDate?: Date) => {
-  const [allMatches, setAllMatches] = useState<Match[]>([]);
+  const [allMatches, setAllMatches] = useState<Match[]>(() => {
+    if (typeof window !== 'undefined') {
+      return getCachedData<Match[]>(UPCOMING_MATCHES_CACHE_KEY) || [];
+    }
+    return [];
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,64 +51,83 @@ export const useUpcomingMatches = (filterDate?: Date) => {
     });
   }, [allMatches, filterDate]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        
-        // Obtener partidos
-        const matchesRes = await fetch('/api/match/upcoming');
-        if (!matchesRes.ok) throw new Error('Error al cargar los partidos');
-        const matchesData = await matchesRes.json();
-        
-        // Obtener clubes
-        const clubsRes = await fetch('/api/clubs');
-        if (!clubsRes.ok) throw new Error('Error al cargar los clubes');
-        const clubsData = await clubsRes.json();
-        
-        // Mapear clubes por ID para búsqueda rápida
-        const clubsMap = new Map<number, Club>();
-        clubsData.forEach((club: any) => {
-          clubsMap.set(club.id, {
-            id: club.id,
-            nombre: club.nombre,
-            logo_url: club.logo_url,
-            fondo_url: club.fondo_url || '/images/bgFifa.jpg' // Valor por defecto
-          });
-        });
-        
-        // Combinar datos de partidos con clubes
-        const enrichedMatches = matchesData.map((match: any) => ({
-          ...match,
-          clubA: clubsMap.get(match.clubAId) || {
-            id: match.clubAId,
-            nombre: 'Equipo Local',
-            logo_url: '/images/placeholder-team.png',
-            fondo_url: '/images/bgFifa.jpg'
-          },
-          clubB: clubsMap.get(match.clubBId) || {
-            id: match.clubBId,
-            nombre: 'Equipo Visitante',
-            logo_url: '/images/placeholder-team.png',
-            fondo_url: '/images/bgFifa.jpg'
-          }
-        }));
-        
-        setAllMatches(enrichedMatches);
-      } catch (err) {
-        console.error('Error en useUpcomingMatches:', err);
-        setError(err instanceof Error ? err.message : 'Error desconocido');
-      } finally {
+  const fetchData = useCallback(async () => {
+    try {
+      // Usar caché si existe
+      const cachedData = getCachedData<Match[]>(UPCOMING_MATCHES_CACHE_KEY);
+      if (cachedData) {
+        setAllMatches(cachedData);
         setLoading(false);
+        return cachedData;
       }
-    };
 
-    fetchData();
+      setLoading(true);
+      
+      // Obtener partidos
+      const matchesRes = await fetch('/api/match/upcoming');
+      if (!matchesRes.ok) throw new Error('Error al cargar los partidos');
+      const matchesData = await matchesRes.json();
+      
+      // Obtener clubes
+      const clubsRes = await fetch('/api/clubs');
+      if (!clubsRes.ok) throw new Error('Error al cargar los clubes');
+      const clubsData = await clubsRes.json();
+      
+      // Mapear clubes por ID para búsqueda rápida
+      const clubsMap = new Map<number, Club>();
+      clubsData.forEach((club: any) => {
+        clubsMap.set(club.id, {
+          id: club.id,
+          nombre: club.nombre,
+          logo_url: club.logo_url,
+          fondo_url: club.fondo_url || '/images/bgFifa.jpg' // Valor por defecto
+        });
+      });
+      
+      // Combinar datos de partidos con clubes
+      const enrichedMatches = matchesData.map((match: any) => ({
+        ...match,
+        clubA: clubsMap.get(match.clubAId) || {
+          id: match.clubAId,
+          nombre: 'Equipo Local',
+          logo_url: '/images/placeholder-team.png',
+          fondo_url: '/images/bgFifa.jpg'
+        },
+        clubB: clubsMap.get(match.clubBId) || {
+          id: match.clubBId,
+          nombre: 'Equipo Visitante',
+          logo_url: '/images/placeholder-team.png',
+          fondo_url: '/images/bgFifa.jpg'
+        }
+      }));
+      
+      // Actualizar caché y estado
+      setAllMatches(enrichedMatches);
+      setCachedData(UPCOMING_MATCHES_CACHE_KEY, enrichedMatches);
+      return enrichedMatches;
+    } catch (err) {
+      console.error('Error en useUpcomingMatches:', err);
+      setError(err instanceof Error ? err.message : 'Error desconocido');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  // Función para forzar la actualización
+  const refetch = useCallback(async () => {
+    clearCachedData(UPCOMING_MATCHES_CACHE_KEY);
+    return fetchData();
+  }, [fetchData]);
+
+  // Cargar datos al montar el componente
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   return { 
     matches,
     loading, 
-    error 
+    error,
+    refetch
   };
 };
