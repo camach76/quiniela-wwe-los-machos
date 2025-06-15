@@ -72,42 +72,44 @@ export const ApuestaForm: React.FC<ApuestaFormProps> = ({
   const { day, time } = formatDate(match.fecha);
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl shadow-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-xl w-full max-w-2xl mx-auto">
+    <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl shadow-lg overflow-hidden border border-gray-200 transition-all duration-300 hover:shadow-xl w-full max-w-2xl mx-3 sm:mx-auto">
       <div className="h-1.5 bg-gradient-to-r from-blue-600 to-blue-800"></div>
       
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         {/* Encabezado con fecha */}
-        <div className="text-center mb-6">
-          <span className="inline-block px-4 py-1.5 text-sm font-semibold text-blue-800 bg-blue-100 rounded-full">
+        <div className="text-center mb-4 sm:mb-6">
+          <span className="inline-block px-3 py-1 text-xs sm:text-sm font-semibold text-blue-800 bg-blue-100 rounded-full">
             {day.charAt(0).toUpperCase() + day.slice(1)} • {time}
           </span>
         </div>
 
         {/* Equipos y marcadores */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-12 items-center gap-4 md:gap-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+          <div className="grid grid-cols-12 items-center gap-2 sm:gap-4 md:gap-6">
             {/* Equipo Local */}
             <div className="col-span-5">
-              <div className="flex flex-col items-center space-y-2">
+              <div className="flex flex-col items-center space-y-1 sm:space-y-2">
                 <TeamLogo 
                   name={match.club_a.nombre}
                   logoUrl={match.club_a?.logo}
-                  size={72}
-                  className="w-16 h-16"
+                  size={64}
+                  className="w-14 h-14 sm:w-16 sm:h-16"
                 />
-                <span className="text-sm md:text-base font-medium text-center text-gray-800">{match.club_a.nombre}</span>
+                <span className="text-xs sm:text-sm md:text-base font-medium text-center text-gray-800 line-clamp-2 h-8 sm:h-auto">
+                  {match.club_a.nombre}
+                </span>
               </div>
             </div>
 
             {/* Marcador */}
             <div className="col-span-2">
-              <div className="flex items-center justify-center space-x-2">
+              <div className="flex items-center justify-center space-x-1 sm:space-x-2">
                 <div className="relative">
                   <input
                     type="number"
                     min="0"
                     max="99"
-                    className={`w-16 h-16 text-center text-3xl font-bold border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                    className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-2xl sm:text-3xl font-bold border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                       bet ? 'bg-gray-100' : 'bg-white hover:border-blue-300'
                     }`}
                     value={a}
@@ -121,13 +123,13 @@ export const ApuestaForm: React.FC<ApuestaFormProps> = ({
                     required
                   />
                 </div>
-                <span className="text-3xl font-bold text-gray-700">:</span>
+                <span className="text-2xl sm:text-3xl font-bold text-gray-700">:</span>
                 <div className="relative">
                   <input
                     type="number"
                     min="0"
                     max="99"
-                    className={`w-16 h-16 text-center text-3xl font-bold border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                    className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-2xl sm:text-3xl font-bold border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                       bet ? 'bg-gray-100' : 'bg-white hover:border-blue-300'
                     }`}
                     value={b}
@@ -146,26 +148,28 @@ export const ApuestaForm: React.FC<ApuestaFormProps> = ({
 
             {/* Equipo Visitante */}
             <div className="col-span-5">
-              <div className="flex flex-col items-center space-y-2">
+              <div className="flex flex-col items-center space-y-1 sm:space-y-2">
                 <TeamLogo 
                   name={match.club_b.nombre}
                   logoUrl={match.club_b?.logo}
-                  size={72}
-                  className="w-16 h-16"
+                  size={64}
+                  className="w-14 h-14 sm:w-16 sm:h-16"
                 />
-                <span className="text-sm md:text-base font-medium text-center text-gray-800">{match.club_b.nombre}</span>
+                <span className="text-xs sm:text-sm md:text-base font-medium text-center text-gray-800 line-clamp-2 h-8 sm:h-auto">
+                  {match.club_b.nombre}
+                </span>
               </div>
             </div>
           </div>
-
+          
           {/* Mensajes de estado */}
           <div className={`h-8 flex items-center justify-center`}>
             {showSuccess ? (
-              <p className="text-center text-green-600 text-sm font-medium animate-fade-in">
+              <p className="text-center text-green-600 text-xs sm:text-sm font-medium animate-fade-in">
                 ¡Apuesta guardada! ✓
               </p>
             ) : bet ? (
-              <p className="text-center text-green-600 text-sm font-medium">
+              <p className="text-center text-green-600 text-xs sm:text-sm font-medium">
                 Ya apostaste este partido
               </p>
             ) : null}
@@ -177,7 +181,7 @@ export const ApuestaForm: React.FC<ApuestaFormProps> = ({
               <button
                 type="submit"
                 disabled={!a || !b}
-                className={`w-full py-3 px-6 rounded-lg font-semibold text-white transition-all duration-300 ${
+                className={`w-full py-2 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold text-white transition-all duration-300 text-sm sm:text-base ${
                   !a || !b
                     ? 'bg-gray-400 cursor-not-allowed'
                     : 'bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 transform hover:-translate-y-0.5 shadow-md hover:shadow-lg active:scale-95'
