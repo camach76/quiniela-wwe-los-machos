@@ -23,7 +23,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
   className = '' 
 }) => {
   return (
-    <div className={`relative overflow-hidden rounded-2xl shadow-xl h-64 ${className}`}>
+    <div className={`relative overflow-hidden rounded-2xl shadow-xl h-54 ${className}`}>
       {/* Fondo del equipo local (izquierda) */}
       <div 
         className="absolute inset-0 w-1/2 bg-cover bg-center"
@@ -44,7 +44,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
       {/* Overlay con gradiente central */}
       <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/30" />
       {/* Contenido principal */}
-      <div className="relative z-10 h-full flex flex-col justify-center p-6 text-white">
+      <div className="relative z-10 h-full flex flex-col justify-center p-2 text-white">
         {torneo && (
           <div className="text-center text-sm font-medium text-gray-200 mb-2">
             {torneo.toUpperCase()}

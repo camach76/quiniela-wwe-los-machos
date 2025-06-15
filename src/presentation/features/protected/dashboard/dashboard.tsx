@@ -9,11 +9,12 @@ import { Estadisticas } from "@/presentation/components/estadisticas/estadistica
 import { MinRanking } from "@/presentation/components/ranking/min-ranking";
 import { AccesosRapidos } from "@/presentation/components/fastAcces/fastAcces";
 import { MatchesList } from "@/presentation/components/matchList/matchList";
+import { MatchListComplete } from "@/presentation/components/matchListComplete/matchListComplete";
 
 export default function Dashboard() {
   const { user } = useUserSession();
   const supabase = createClientComponentClient();  
-  const [activeTab, setActiveTab] = useState<"proximos" | "recientes">("proximos");
+  const [activeTab, setActiveTab] = useState<"proximos" | "completados">("proximos");
   
   // Estados para el ranking
   const [topJugadores, setTopJugadores] = useState<any[]>([]);
@@ -86,25 +87,27 @@ export default function Dashboard() {
                 >
                   Próximos Partidos
                 </button>
-                <button
-                  onClick={() => setActiveTab("recientes")}
-                  className={`flex-1 py-3 px-4 text-center font-medium ${
-                    activeTab === "recientes" 
-                      ? "text-blue-600 border-b-2 border-blue-500" 
-                      : "text-gray-500 hover:text-gray-700"
-                  }`}
+                <button 
+                onClick={() => setActiveTab("completados")}
+                className={`flex-1 py-3 text-center font-medium ${
+                  activeTab === "completados"
+                    ? "text-blue-600 border-b-2 border-blue-500" 
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
                 >
-                  Partidos Recientes
+                  Partidos Completados
                 </button>
               </div>
-
               {/* Contenido de las pestañas */}
-              <div className="p-6">
-                <MatchesList tipo={activeTab} />
+              <div className="p-3">
+                {activeTab === 'completados' ? (
+                  <MatchListComplete maxItems={3} />
+                ) : (
+                  <MatchesList tipo={activeTab} maxItems={3} />
+                )}
               </div>
             </div>
           </div>
-
           {/* Columna derecha - Ranking */}
           <div className="w-full lg:w-1/4">
             <div className="sticky top-6">

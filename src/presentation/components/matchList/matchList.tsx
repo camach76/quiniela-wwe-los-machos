@@ -5,16 +5,17 @@ import { MatchCard } from '../matchCard/matchCard';
 
 interface MatchesListProps {
   className?: string;
-  tipo?: 'proximos' | 'recientes';
+  tipo?: 'proximos' | 'completados';
   soloHoy?: boolean;
+  maxItems?: number;
 }
 
 export const MatchesList: React.FC<MatchesListProps> = ({
   className = '',
   tipo = 'proximos',
-  soloHoy = false
+  soloHoy = false,
+  maxItems = Infinity
 }) => {
-  // Usar la fecha actual si soloHoy es true, de lo contrario undefined
   const fechaFiltro = soloHoy ? new Date() : undefined;
   const { matches, loading, error } = useUpcomingMatches(fechaFiltro);
 
@@ -58,6 +59,11 @@ export const MatchesList: React.FC<MatchesListProps> = ({
       .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
   }, [matches, tipo, soloHoy]);
 
+  // Aplicar límite de items
+  const partidosAMostrar = useMemo(() => {
+    return partidosFiltrados.slice(0, maxItems);
+  }, [partidosFiltrados, maxItems]);
+
   // Mostrar errores
   useEffect(() => {
     if (error) {
@@ -69,7 +75,7 @@ export const MatchesList: React.FC<MatchesListProps> = ({
   if (loading) {
     return (
       <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
+        {[...Array(Math.min(3, maxItems))].map((_, i) => (
           <div key={i} className="h-64 bg-gray-100 animate-pulse rounded-2xl" />
         ))}
       </div>
@@ -105,7 +111,7 @@ export const MatchesList: React.FC<MatchesListProps> = ({
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {partidosFiltrados.map((partido) => {
+      {partidosAMostrar.map((partido) => {
         try {
           // Transformar los datos al formato que espera MatchCard
           const datosPartido = {
