@@ -1,5 +1,5 @@
 import React from 'react';
-import Image from 'next/image';
+import { TeamLogo } from '../TeamLogo';
 
 interface Equipo {
   nombre: string;
@@ -50,20 +50,22 @@ export const MatchCard: React.FC<MatchCardProps> = ({
       {/* Contenido principal */}
       <div className="relative z-10 h-full flex flex-col justify-center p-2 text-white">
         {torneo && (
-          <div className="text-center text-sm font-medium text-gray-200 mb-2">
-            {torneo.toUpperCase()}
+          <div className="flex justify-center mb-3">
+            <span className="inline-block bg-red-700/80 text-white text-xs font-bold px-3 py-1 rounded-full border border-red-600 shadow-md">
+              {torneo.toUpperCase()}
+            </span>
           </div>
         )}
         
         <div className="flex items-center justify-between h-3/4">
           {/* Equipo local */}
           <div className="flex-1 flex flex-col items-center space-y-2">
-            <div className="w-20 h-20 relative">
-              <Image
-                src={local.logo}
-                alt={local.nombre}
-                fill
-                className="object-contain"
+            <div className="w-20 h-20">
+              <TeamLogo 
+                name={local.nombre}
+                logoUrl={local.logo}
+                size={80}
+                className="w-full h-full"
               />
             </div>
             <span className="text-lg font-bold text-center">{local.nombre}</span>
@@ -86,12 +88,12 @@ export const MatchCard: React.FC<MatchCardProps> = ({
           
           {/* Equipo visitante */}
           <div className="flex-1 flex flex-col items-center space-y-2">
-            <div className="w-20 h-20 relative">
-              <Image
-                src={visitante.logo}
-                alt={visitante.nombre}
-                fill
-                className="object-contain"
+            <div className="w-20 h-20">
+              <TeamLogo 
+                name={visitante.nombre}
+                logoUrl={visitante.logo}
+                size={80}
+                className="w-full h-full"
               />
             </div>
             <span className="text-lg font-bold text-center">{visitante.nombre}</span>

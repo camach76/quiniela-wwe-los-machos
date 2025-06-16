@@ -68,9 +68,9 @@ export default function Dashboard() {
               {/* Contenido de las pestañas */}
               <div className="p-3">
                 {activeTab === 'completados' ? (
-                  <MatchListComplete maxItems={5} />
+                  <MatchListComplete maxItems={3} />
                 ) : (
-                  <UpcomingMatchesList limit={5} />
+                  <UpcomingMatchesList limit={3} />
                 )}
               </div>
             </div>

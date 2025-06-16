@@ -44,16 +44,21 @@ export const useUpcomingMatchesLimited = (limit: number = 3) => {
       // Usar caché si existe
       const cachedData = getCachedData<Match[]>(UPCOMING_MATCHES_LIMITED_CACHE_KEY);
       if (cachedData) {
-        console.log('Usando datos en caché:', cachedData);
-        setMatches(cachedData);
+        // Aplicar el límite a los datos en caché
+        const limitedCachedData = cachedData.slice(0, limit);
+        console.log('Usando datos en caché (limitados):', limitedCachedData);
+        setMatches(limitedCachedData);
         setLoading(false);
-        return cachedData;
+        return limitedCachedData;
       }
 
       setLoading(true);
       
       // Hacemos la consulta directamente a Supabase
       const now = new Date().toISOString();
+      
+      // Aseguramos que el límite se aplique tanto en la consulta como en el cliente
+      const dbLimit = Math.max(limit, 10); // Traemos un poco más para el caché
       
       const { data: matchesData, error } = await supabase
         .from('matches')
@@ -64,13 +69,16 @@ export const useUpcomingMatchesLimited = (limit: number = 3) => {
         `)
         .gte('fecha', now)
         .order('fecha', { ascending: true })
-        .limit(limit);
+        .limit(dbLimit);
       
       if (error) throw error;
       if (!matchesData) throw new Error('No se encontraron partidos próximos');
       
       // Mapeamos los datos al formato que espera nuestro componente
-      const formattedMatches = matchesData.map((match: any) => ({
+      // Aplicamos el límite después de formatear los datos
+      const formattedMatches = matchesData
+        .slice(0, limit)
+        .map((match: any) => ({
         id: match.id,
         clubAId: match.club_a_id,
         clubBId: match.club_b_id,
