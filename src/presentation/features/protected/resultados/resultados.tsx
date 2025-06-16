@@ -1,11 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import {
-  FaSignOutAlt,
-  FaBell,
   FaListOl,
   FaFilter,
   FaCalendarAlt,
@@ -328,41 +325,6 @@ export default function Resultados() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-100">
-      {/* Navbar */}
-      <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-10 flex items-center justify-between px-4 lg:px-6 py-4">
-        <div className="flex items-center gap-3">
-          <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="relative w-10 h-10">
-              <Image
-                src="/images/logo.png"
-                alt="Logo"
-                fill
-                className="object-contain"
-              />
-            </div>
-            <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">
-              Quinela Mundial de Clubes
-            </span>
-          </Link>
-        </div>
-        <div className="flex items-center gap-4">
-          <button className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors relative">
-            <FaBell className="text-gray-600" />
-            <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
-          </button>
-          <div className="hidden sm:flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium">
-              {userName.charAt(0)}
-            </div>
-            <span className="text-gray-700 font-medium">Hola, {userName}</span>
-          </div>
-          <button className="flex items-center gap-2 text-red-500 hover:text-red-700 font-medium transition-colors">
-            <FaSignOutAlt />
-            <span className="hidden sm:inline">Salir</span>
-          </button>
-        </div>
-      </nav>
-
       {/* Contenido principal */}
       <main className="w-full px-4 lg:px-6 py-6">
         {/* Encabezado */}
