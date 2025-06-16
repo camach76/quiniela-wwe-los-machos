@@ -31,37 +31,63 @@ export const MatchesList: React.FC<MatchesListProps> = ({
       return [];
     }
 
-    // Si es modo soloHoy, ya están filtrados por fecha, solo ordenamos
+    console.log('Filtrando partidos. Tipo:', tipo, 'Total partidos:', matches.length);
+    
+    // Si es modo soloHoy, filtramos por la fecha de hoy
     if (soloHoy) {
-      return [...matches].sort((a, b) => 
-        new Date(a.fecha).getTime() - new Date(b.fecha).getTime()
-      );
-    }
-
-    // Si no es modo soloHoy, aplicamos el filtro por fecha
-    const ahora = new Date();
-    return matches
-      .filter(partido => {
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      
+      const partidosHoy = matches.filter(partido => {
         try {
-          if (!partido.fecha) {
-            console.warn('Partido sin fecha:', partido);
-            return false;
-          }
           const fechaPartido = new Date(partido.fecha);
-          return tipo === 'proximos' 
-            ? fechaPartido >= ahora 
-            : fechaPartido < ahora;
+          return (
+            fechaPartido.getFullYear() === hoy.getFullYear() &&
+            fechaPartido.getMonth() === hoy.getMonth() &&
+            fechaPartido.getDate() === hoy.getDate()
+          );
         } catch (err) {
           console.error('Error al procesar partido:', partido, err);
           return false;
         }
-      })
-      .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
+      });
+      
+      console.log('Partidos de hoy:', partidosHoy.length);
+      return partidosHoy.sort((a, b) => 
+        new Date(a.fecha).getTime() - new Date(b.fecha).getTime()
+      );
+    }
+
+    // Si no es modo soloHoy, aplicamos el filtro por tipo (próximos o completados)
+    const ahora = new Date();
+    const partidosFiltrados = matches.filter(partido => {
+      try {
+        if (!partido.fecha) {
+          console.warn('Partido sin fecha:', partido);
+          return false;
+        }
+        const fechaPartido = new Date(partido.fecha);
+        return tipo === 'proximos' 
+          ? fechaPartido >= ahora 
+          : fechaPartido < ahora;
+      } catch (err) {
+        console.error('Error al procesar partido:', partido, err);
+        return false;
+      }
+    });
+    
+    console.log(`Partidos ${tipo}:`, partidosFiltrados.length);
+    return partidosFiltrados.sort((a, b) => 
+      new Date(a.fecha).getTime() - new Date(b.fecha).getTime()
+    );
   }, [matches, tipo, soloHoy]);
 
   // Aplicar límite de items
   const partidosAMostrar = useMemo(() => {
-    return partidosFiltrados.slice(0, maxItems);
+    console.log('Partidos a mostrar (antes de limitar):', partidosFiltrados);
+    const resultado = partidosFiltrados.slice(0, maxItems);
+    console.log('Partidos a mostrar (después de limitar):', resultado);
+    return resultado;
   }, [partidosFiltrados, maxItems]);
 
   // Mostrar errores
@@ -100,11 +126,19 @@ export const MatchesList: React.FC<MatchesListProps> = ({
               ? 'No hay partidos próximos programados' 
               : 'No hay partidos recientes para mostrar'}
         </p>
-        {!soloHoy && (
-          <p className="text-sm text-gray-400 mt-2">
-            Total de partidos cargados: {matches.length}
-          </p>
-        )}
+        <div className="text-sm text-gray-400 mt-2 space-y-1">
+          <p>Total de partidos cargados: {matches.length}</p>
+          <p>Partidos filtrados: {partidosFiltrados.length}</p>
+          <p>Hora actual: {new Date().toISOString()}</p>
+        </div>
+        <div className="mt-4 text-left max-w-md mx-auto p-4 bg-gray-50 rounded-lg">
+          <p className="font-medium mb-2">Primeros 3 partidos:</p>
+          {matches.slice(0, 3).map((p, i) => (
+            <div key={i} className="text-xs text-gray-600 mb-1">
+              {p.clubA?.nombre || 'Equipo Local'} vs {p.clubB?.nombre || 'Equipo Visitante'} - {new Date(p.fecha).toLocaleString()}
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

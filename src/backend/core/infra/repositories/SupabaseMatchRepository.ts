@@ -37,13 +37,69 @@ export class SupabaseMatchRepository implements MatchRepository {
     const now = new Date().toISOString();
     const { data, error } = await this.supabase
       .from("matches")
-      .select("*")
+      .select(`
+        *,
+        club_a:club_a_id(*),
+        club_b:club_b_id(*)
+      `)
       .gte("fecha", now)
       .order("fecha", { ascending: true });
 
     if (error) throw new Error(error.message);
 
-    return data as Match[];
+    // Mapear los datos para incluir la información de los clubes
+    return data.map((match: any) => ({
+      ...match,
+      clubAId: match.club_a_id,
+      clubBId: match.club_b_id,
+      clubA: match.club_a ? {
+        id: match.club_a.id,
+        nombre: match.club_a.nombre,
+        logo_url: match.club_a.logo_url,
+        fondo_url: match.club_a.fondo_url || '/images/bgFifa.jpg'
+      } : null,
+      clubB: match.club_b ? {
+        id: match.club_b.id,
+        nombre: match.club_b.nombre,
+        logo_url: match.club_b.logo_url,
+        fondo_url: match.club_b.fondo_url || '/images/bgFifa.jpg'
+      } : null
+    }));
+  }
+
+  async getUpcomingLimited(limit: number): Promise<Match[]> {
+    const now = new Date().toISOString();
+    const { data, error } = await this.supabase
+      .from("matches")
+      .select(`
+        *,
+        club_a:club_a_id(*),
+        club_b:club_b_id(*)
+      `)
+      .gte("fecha", now)
+      .order("fecha", { ascending: true })
+      .limit(limit);
+
+    if (error) throw new Error(error.message);
+
+    // Mapear los datos para incluir la información de los clubes
+    return data.map((match: any) => ({
+      ...match,
+      clubAId: match.club_a_id,
+      clubBId: match.club_b_id,
+      clubA: match.club_a ? {
+        id: match.club_a.id,
+        nombre: match.club_a.nombre,
+        logo_url: match.club_a.logo_url,
+        fondo_url: match.club_a.fondo_url || '/images/bgFifa.jpg'
+      } : null,
+      clubB: match.club_b ? {
+        id: match.club_b.id,
+        nombre: match.club_b.nombre,
+        logo_url: match.club_b.logo_url,
+        fondo_url: match.club_b.fondo_url || '/images/bgFifa.jpg'
+      } : null
+    }));
   }
 
   async getCompleted(): Promise<Match[]> {

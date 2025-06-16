@@ -25,22 +25,26 @@ export const MatchCard: React.FC<MatchCardProps> = ({
   return (
     <div className={`relative overflow-hidden rounded-2xl shadow-xl h-54 ${className}`}>
       {/* Fondo del equipo local (izquierda) */}
-      <div 
-        className="absolute inset-0 w-1/2 bg-cover bg-center"
-        style={{ 
-          backgroundImage: `url(${local.fondo})`,
-          clipPath: 'polygon(0 0, 100% 0, 80% 100%, 0% 100%)'
-        }}
-      />
+      {local.fondo && (
+        <div 
+          className="absolute inset-0 w-1/2 bg-cover bg-center"
+          style={{ 
+            backgroundImage: `url(${local.fondo})`,
+            clipPath: 'polygon(0 0, 100% 0, 80% 100%, 0% 100%)'
+          }}
+        />
+      )}
       
       {/* Fondo del equipo visitante (derecha) */}
-      <div 
-        className="absolute inset-0 left-1/2 w-1/2 bg-cover bg-center"
-        style={{ 
-          backgroundImage: `url(${visitante.fondo})`,
-          clipPath: 'polygon(20% 0, 100% 0, 100% 100%, 0% 100%)'
-        }}
-      /> 
+      {visitante.fondo && (
+        <div 
+          className="absolute inset-0 left-1/2 w-1/2 bg-cover bg-center"
+          style={{ 
+            backgroundImage: `url(${visitante.fondo})`,
+            clipPath: 'polygon(20% 0, 100% 0, 100% 100%, 0% 100%)'
+          }}
+        />
+      )}
       {/* Overlay con gradiente central */}
       <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/30" />
       {/* Contenido principal */}

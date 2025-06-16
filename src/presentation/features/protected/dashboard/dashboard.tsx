@@ -7,24 +7,15 @@ import { toast } from "react-hot-toast";
 import { Estadisticas } from "@/presentation/components/estadisticas/estadisticas";
 import { MinRanking } from "@/presentation/components/ranking/min-ranking";
 import { AccesosRapidos } from "@/presentation/components/fastAcces/fastAcces";
-import { MatchesList } from "@/presentation/components/matchList/matchList";
 import { MatchListComplete } from "@/presentation/components/matchListComplete/matchListComplete";
-import { useRanking } from "@/presentation/hooks/useRanking";
+// El componente MinRanking ya maneja su propio estado
+import { UpcomingMatchesList } from "@/presentation/components/matchList/UpcomingMatchesList";
 
 export default function Dashboard() {
   const { user } = useUserSession();
   const [activeTab, setActiveTab] = useState<"proximos" | "completados">("proximos");
   ;
-  // Usar el hook de ranking
-  const { topJugadores, loading: loadingRanking, error } = useRanking(10);
-
-  // Mostrar error si hay alguno
-  useEffect(() => {
-    if (error) {
-      console.error('Error al cargar el ranking:', error);
-      toast.error('Error al cargar el ranking');
-    }
-  }, [error]);
+  // El componente MinRanking maneja su propio estado
 
   // Estadísticas del usuario
   const estadisticas = {
@@ -64,12 +55,12 @@ export default function Dashboard() {
                   Próximos Partidos
                 </button>
                 <button 
-                onClick={() => setActiveTab("completados")}
-                className={`flex-1 py-3 text-center font-medium ${
-                  activeTab === "completados"
-                    ? "text-blue-600 border-b-2 border-blue-500" 
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
+                  onClick={() => setActiveTab("completados")}
+                  className={`flex-1 py-3 text-center font-medium ${
+                    activeTab === "completados"
+                      ? "text-blue-600 border-b-2 border-blue-500" 
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
                 >
                   Partidos Completados
                 </button>
@@ -77,18 +68,17 @@ export default function Dashboard() {
               {/* Contenido de las pestañas */}
               <div className="p-3">
                 {activeTab === 'completados' ? (
-                  <MatchListComplete maxItems={3} />
+                  <MatchListComplete maxItems={5} />
                 ) : (
-                  <MatchesList tipo={activeTab} maxItems={3} />
+                  <UpcomingMatchesList limit={5} />
                 )}
               </div>
             </div>
           </div>
+          
           {/* Columna derecha - Ranking */}
-          <div className="w-full lg:w-1/4">
-            <div className="sticky top-6">
-              <MinRanking />
-            </div>
+          <div className="w-full lg:w-1/4 space-y-6">
+            <MinRanking />
           </div>
         </div>
       </main>

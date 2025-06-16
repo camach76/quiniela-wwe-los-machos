@@ -57,9 +57,11 @@ export const useUpcomingMatches = (filterDate?: Date) => {
 
   const fetchData = useCallback(async () => {
     try {
+      console.log('Iniciando carga de partidos...');
       // Usar caché si existe
       const cachedData = getCachedData<Match[]>(UPCOMING_MATCHES_CACHE_KEY);
       if (cachedData) {
+        console.log('Usando datos en caché:', cachedData);
         setAllMatches(cachedData);
         setLoading(false);
         return cachedData;
@@ -68,6 +70,7 @@ export const useUpcomingMatches = (filterDate?: Date) => {
       setLoading(true);
       
       // Obtener partidos y clubes usando los repositorios de Supabase
+      console.log('Obteniendo partidos y clubes de Supabase...');
       const matchRepo = new SupabaseMatchRepository();
       const clubRepo = new SupabaseClubRepository(supabase);
       
@@ -75,6 +78,9 @@ export const useUpcomingMatches = (filterDate?: Date) => {
         matchRepo.getUpcoming(),
         clubRepo.getAll()
       ]);
+      
+      console.log('Datos de partidos obtenidos:', matchesData);
+      console.log('Datos de clubes obtenidos:', clubsData);
       
       // Mapear clubes por ID para búsqueda rápida
       const clubsMap = new Map<number, Club>();
@@ -105,8 +111,11 @@ export const useUpcomingMatches = (filterDate?: Date) => {
       }));
       
       // Actualizar caché y estado
-      setAllMatches(enrichedMatches);
+      console.log('Partidos enriquecidos:', enrichedMatches);
       setCachedData(UPCOMING_MATCHES_CACHE_KEY, enrichedMatches);
+      setAllMatches(enrichedMatches);
+      setLoading(false);
+      console.log('Partidos cargados exitosamente');
       return enrichedMatches;
     } catch (err) {
       console.error('Error en useUpcomingMatches:', err);
