@@ -4,6 +4,7 @@ import type React from "react";
 
 import { useState } from "react";
 import { useLogin } from "../hooks/useLogin";
+import { useGoogleLogin } from "../hooks/useGoogleLogin";
 import {
   FaEnvelope,
   FaLock,
@@ -19,6 +20,7 @@ export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const { signInWithGoogle } = useGoogleLogin();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -172,6 +174,7 @@ export default function LoginForm() {
             <div className="grid grid-cols-3 gap-3">
               <button
                 type="button"
+                onClick={() => signInWithGoogle()}
                 className="inline-flex justify-center items-center py-2.5 border border-gray-300 rounded-xl bg-white hover:bg-gray-50 transition-colors"
               >
                 <FaGoogle className="text-red-500" />
