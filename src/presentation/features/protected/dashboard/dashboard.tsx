@@ -14,7 +14,7 @@ import { useRanking } from "@/presentation/hooks/useRanking";
 export default function Dashboard() {
   const { user } = useUserSession();
   const [activeTab, setActiveTab] = useState<"proximos" | "completados">("proximos");
-  
+  ;
   // Usar el hook de ranking
   const { topJugadores, loading: loadingRanking, error } = useRanking(10);
 

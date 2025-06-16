@@ -41,8 +41,9 @@ export interface Match {
   readonly club_b?: Club | null;
 }
 
-export const useCompletedMatches = (filterDate?: Date) => {
+export const useCompletedMatches = (selectedDate: Date) => {
   const [allMatches, setAllMatches] = useState<Match[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
@@ -98,9 +99,12 @@ export const useCompletedMatches = (filterDate?: Date) => {
       
       console.log('Partidos completados formateados:', formattedMatches);
       
-      // Actualizar caché y estado
-      setCachedData(COMPLETED_MATCHES_CACHE_KEY, formattedMatches);
       setAllMatches(formattedMatches);
+      setCachedData(COMPLETED_MATCHES_CACHE_KEY, formattedMatches, 60 * 60); // Cache por 1 hora
+      
+      // Filtrar partidos por la fecha seleccionada
+      const filtered = filterMatchesByDate(formattedMatches, selectedDate);
+      setMatches(filtered);
       setInitialized(true);
       return formattedMatches;
     } catch (err) {
@@ -110,7 +114,7 @@ export const useCompletedMatches = (filterDate?: Date) => {
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, [supabase, selectedDate]);
 
   // Función para forzar la actualización
   const refetch = useCallback(async () => {
@@ -143,30 +147,23 @@ export const useCompletedMatches = (filterDate?: Date) => {
     loadInitialData();
   }, [fetchCompletedMatches]);
 
-  // Filtrar partidos por fecha si se proporciona
-  const matches = useMemo(() => {
-    if (!filterDate) return allMatches;
-    
-    return allMatches.filter(match => {
-      try {
-        const matchDate = new Date(match.fecha);
-        return (
-          matchDate.getDate() === filterDate.getDate() &&
-          matchDate.getMonth() === filterDate.getMonth() &&
-          matchDate.getFullYear() === filterDate.getFullYear()
-        );
-      } catch (err) {
-        console.error('Error al procesar fecha del partido:', match, err);
-        return false;
-      }
-    });
-  }, [allMatches, filterDate]);
+  // Efecto para filtrar cuando cambia la fecha seleccionada
+  useEffect(() => {
+    if (allMatches.length > 0) {
+      const filtered = filterMatchesByDate(allMatches, selectedDate);
+      setMatches(filtered);
+    }
+  }, [selectedDate, allMatches]);
 
-  return { 
-    matches,
-    loading, 
-    error,
-    initialized,
-    refetch
+  // Función para filtrar partidos por fecha
+  const filterMatchesByDate = (matches: Match[], date: Date): Match[] => {
+    const dateStr = date.toISOString().split('T')[0];
+    return matches.filter(match => {
+      const matchDate = new Date(match.fecha);
+      const matchDateStr = matchDate.toISOString().split('T')[0];
+      return matchDateStr === dateStr;
+    });
   };
+
+  return { matches, loading, error, initialized, refetch };
 };

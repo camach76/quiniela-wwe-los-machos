@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Match } from '../../../../hooks/useCompletedMatches';
 import { useBets } from '../hooks/useBets';
+import { betService } from '../services/betService';
 
 interface MatchCardProps {
   match: Match;
