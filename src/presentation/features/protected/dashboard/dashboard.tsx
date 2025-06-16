@@ -9,51 +9,29 @@ import { MinRanking } from "@/presentation/components/ranking/min-ranking";
 import { AccesosRapidos } from "@/presentation/components/fastAcces/fastAcces";
 import { MatchesList } from "@/presentation/components/matchList/matchList";
 import { MatchListComplete } from "@/presentation/components/matchListComplete/matchListComplete";
+import { useRanking } from "@/presentation/hooks/useRanking";
 
 export default function Dashboard() {
   const { user } = useUserSession();
-  const supabase = createClientComponentClient();  
   const [activeTab, setActiveTab] = useState<"proximos" | "completados">("proximos");
   
-  // Estados para el ranking
-  const [topJugadores, setTopJugadores] = useState<any[]>([]);
-  const [loadingRanking, setLoadingRanking] = useState(true);
+  // Usar el hook de ranking
+  const { topJugadores, loading: loadingRanking, error } = useRanking(10);
 
-  // Cargar ranking
+  // Mostrar error si hay alguno
   useEffect(() => {
-    const fetchRanking = async () => {
-      if (!user) {
-        setTopJugadores([]);
-        setLoadingRanking(false);
-        return;
-      }
+    if (error) {
+      console.error('Error al cargar el ranking:', error);
+      toast.error('Error al cargar el ranking');
+    }
+  }, [error]);
 
-      try {
-        setLoadingRanking(true);
-        const res = await fetch(`/api/ranking?userId=${user.id}`);
-        const data = await res.json();
-        
-        if (!res.ok) {
-          throw new Error(data.error || 'Error al cargar el ranking');
-        }
-        
-        setTopJugadores(data);
-      } catch (error) {
-        console.error('Error al cargar el ranking:', error);
-        toast.error('Error al cargar el ranking');
-      } finally {
-        setLoadingRanking(false);
-      }
-    };
-
-    fetchRanking();
-  }, [user]);
-
-  // Estadísticas del usuario (ejemplo)
+  // Estadísticas del usuario
   const estadisticas = {
-    puntuacion: 150,
-    aciertos: 12,
-    totalPronosticos: 15
+    puntuacion: user?.puntos || 0,
+    aciertos: user?.aciertos || 0,
+    totalPronosticos: user?.total_apostados || 0,
+    precision: user?.precision || 0
   };
 
   return (
