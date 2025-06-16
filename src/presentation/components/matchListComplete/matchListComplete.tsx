@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useCompletedMatches } from '@/presentation/hooks/useCompletedMatches';
+import { useCompletedMatchesList } from '@/presentation/hooks/useCompletedMatchesList';
 import { MatchCard } from '../matchCard/matchCard';
 import { toast } from 'react-hot-toast';
 
@@ -12,14 +12,7 @@ export const MatchListComplete: React.FC<MatchListCompleteProps> = ({
   className = '',
   maxItems = Infinity
 }) => {
-  const { matches, loading, error } = useCompletedMatches();
-
-  // Ordenar partidos por fecha (más recientes primero)
-  const sortedMatches = useMemo(() => {
-    return [...matches].sort((a, b) => 
-      new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
-    ).slice(0, maxItems);
-  }, [matches, maxItems]);
+  const { matches: completedMatches, loading, error } = useCompletedMatchesList(maxItems);
 
   // Mostrar mensaje de error si hay alguno
   if (error) {
@@ -43,7 +36,7 @@ export const MatchListComplete: React.FC<MatchListCompleteProps> = ({
   }
 
   // Mostrar mensaje si no hay partidos
-  if (sortedMatches.length === 0) {
+  if (completedMatches.length === 0) {
     return (
       <div className={`text-center py-8 text-gray-500 ${className}`}>
         No hay partidos completados para mostrar
@@ -53,7 +46,7 @@ export const MatchListComplete: React.FC<MatchListCompleteProps> = ({
 
   return (
     <div className={`grid gap-4 ${className}`}>
-      {sortedMatches.map((partido) => {
+      {completedMatches.map((partido) => {
         try {
           const datosPartido = {
             id: partido.id,
