@@ -203,7 +203,17 @@ export default function QuinelaPage() {
 
     try {
       // Primero intentamos obtener la apuesta existente
-      const existingBet = bets.find(b => b.matchId === matchId);
+      let existingBet = bets.find(b => b.matchId === matchId);
+      
+      // Si no encontramos la apuesta localmente, intentamos buscarla en la base de datos
+      if (!existingBet) {
+        try {
+          const betsFromDb = await betRepo.getByUser(userId);
+          existingBet = betsFromDb.find(b => b.matchId === matchId);
+        } catch (error) {
+          console.error('Error al buscar apuesta existente:', error);
+        }
+      }
       
       if (existingBet) {
         // Si existe, la actualizamos
