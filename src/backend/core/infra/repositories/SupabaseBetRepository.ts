@@ -10,8 +10,8 @@ export class SupabaseBetRepository implements BetRepository {
     const betData = {
       user_id: input.userId,
       match_id: input.matchId,
-      prediccion_a: input.prediccion_a,
-      prediccion_b: input.prediccion_b,
+      prediccion_a: input.prediccionA,
+      prediccion_b: input.prediccionB,
       puntos_obtenidos: 0,
     };
 
@@ -29,8 +29,8 @@ export class SupabaseBetRepository implements BetRepository {
       id: data.id,
       userId: data.user_id,
       matchId: data.match_id,
-      prediccion_a: data.prediccion_a,
-      prediccion_b: data.prediccion_b,
+      prediccionA: data.prediccion_a,
+      prediccionB: data.prediccion_b,
       puntosObtenidos: data.puntos_obtenidos,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
@@ -39,8 +39,8 @@ export class SupabaseBetRepository implements BetRepository {
 
   async update(bet: Bet): Promise<Bet> {
     const betData = {
-      prediccion_a: bet.prediccion_a,
-      prediccion_b: bet.prediccion_b,
+      prediccion_a: bet.prediccionA,
+      prediccion_b: bet.prediccionB,
       puntos_obtenidos: bet.puntosObtenidos,
     };
 
@@ -59,8 +59,8 @@ export class SupabaseBetRepository implements BetRepository {
       id: data.id,
       userId: data.user_id,
       matchId: data.match_id,
-      prediccion_a: data.prediccion_a,
-      prediccion_b: data.prediccion_b,
+      prediccionA: data.prediccion_a,
+      prediccionB: data.prediccion_b,
       puntosObtenidos: data.puntos_obtenidos,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
@@ -83,8 +83,8 @@ export class SupabaseBetRepository implements BetRepository {
       id: data.id,
       userId: data.user_id,
       matchId: data.match_id,
-      prediccion_a: data.prediccion_a,
-      prediccion_b: data.prediccion_b,
+      prediccionA: data.prediccion_a,
+      prediccionB: data.prediccion_b,
       puntosObtenidos: data.puntos_obtenidos,
       createdAt: data.created_at,
       updatedAt: data.updated_at,
@@ -141,8 +141,8 @@ export class SupabaseBetRepository implements BetRepository {
         id: data.id,
         userId: data.user_id,
         matchId: data.match_id,
-        prediccion_a: data.prediccion_a,
-        prediccion_b: data.prediccion_b,
+        prediccionA: data.prediccion_a,
+        prediccionB: data.prediccion_b,
         puntosObtenidos: data.puntos_obtenidos,
         createdAt: data.created_at,
         updatedAt: data.updated_at,

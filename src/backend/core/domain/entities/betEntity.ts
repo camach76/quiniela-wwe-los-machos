@@ -2,8 +2,8 @@ export interface Bet {
   id: number;
   userId: string;
   matchId: number;
-  prediccion_a: number;
-  prediccion_b: number;
+  prediccionA: number;
+  prediccionB: number;
   puntosObtenidos: number;
   createdAt: string;
   updatedAt: string;

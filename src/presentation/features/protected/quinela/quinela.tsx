@@ -202,18 +202,32 @@ export default function QuinelaPage() {
     const betRepo = new SupabaseBetRepository(supabase);
 
     try {
-      await betRepo.create({
-        userId,
-        matchId,
-        prediccion_a: a,
-        prediccion_b: b,
-      });
+      // Primero intentamos obtener la apuesta existente
+      const existingBet = bets.find(b => b.matchId === matchId);
+      
+      if (existingBet) {
+        // Si existe, la actualizamos
+        await betRepo.update({
+          ...existingBet,
+          prediccionA: a,
+          prediccionB: b,
+        });
+      } else {
+        // Si no existe, creamos una nueva
+        await betRepo.create({
+          userId,
+          matchId,
+          prediccionA: a,
+          prediccionB: b,
+        });
+      }
 
+      // Actualizamos la lista de apuestas
       const updated = await betRepo.getByUser(userId);
       setBets(updated);
     } catch (err) {
-      console.error(err);
-      alert("Error al guardar la predicción");
+      console.error('Error al guardar la predicción:', err);
+      alert("Error al guardar la predicción. Por favor, inténtalo de nuevo.");
     }
   };
 

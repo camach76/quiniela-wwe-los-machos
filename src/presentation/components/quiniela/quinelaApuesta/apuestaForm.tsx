@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { TeamLogo } from "@/presentation/components/TeamLogo";
 
 interface ApuestaFormProps {
@@ -11,8 +11,14 @@ interface ApuestaFormProps {
     club_b: { nombre: string; logo: string };
   };
   bet?: {
-    prediccion_a: number;
-    prediccion_b: number;
+    id?: number;
+    userId?: string;
+    matchId?: number;
+    prediccionA: number;
+    prediccionB: number;
+    puntosObtenidos?: number;
+    createdAt?: string;
+    updatedAt?: string;
   } | null;
   onSubmit: (a: number, b: number) => void;
 }
@@ -22,20 +28,51 @@ export const ApuestaForm: React.FC<ApuestaFormProps> = ({
   bet,
   onSubmit,
 }) => {
+  const [showSuccess, setShowSuccess] = useState(false);
+  
+  // Verificar si el partido ya comenzó
+  const isMatchStarted = useMemo(() => {
+    try {
+      const matchDate = new Date(match.fecha);
+      const now = new Date();
+      return now >= matchDate;
+    } catch (error) {
+      return false; // En caso de error, asumir que no ha comenzado
+    }
+  }, [match.fecha]);
+  
+  // Determinar si los inputs deben estar deshabilitados
+  const isDisabled = isMatchStarted; // Solo deshabilitar si el partido ya comenzó
+  
+  
+  // Usar los valores de la apuesta existente si están disponibles
+  // y forzar la actualización cuando cambie el prop 'bet'
   const [a, setA] = useState<string>(
-    bet?.prediccion_a !== undefined && bet?.prediccion_a !== null && bet.prediccion_a >= 0
-      ? bet.prediccion_a.toString()
+    bet?.prediccionA !== undefined && bet?.prediccionA !== null && bet.prediccionA >= 0
+      ? bet.prediccionA.toString()
       : ""
   );
 
   const [b, setB] = useState<string>(
-    bet?.prediccion_b !== undefined && bet?.prediccion_b !== null && bet.prediccion_b >= 0
-      ? bet.prediccion_b.toString()
+    bet?.prediccionB !== undefined && bet?.prediccionB !== null && bet.prediccionB >= 0
+      ? bet.prediccionB.toString()
       : ""
   );
 
-  const [showSuccess, setShowSuccess] = useState(false);
-  // Componente TeamLogo ya está importado y listo para usar
+  // Actualizar los estados locales cuando cambie el prop 'bet'
+  useEffect(() => {
+    if (bet?.prediccionA !== undefined && bet?.prediccionA !== null && bet.prediccionA >= 0) {
+      setA(bet.prediccionA.toString());
+    } else {
+      setA("");
+    }
+
+    if (bet?.prediccionB !== undefined && bet?.prediccionB !== null && bet.prediccionB >= 0) {
+      setB(bet.prediccionB.toString());
+    } else {
+      setB("");
+    }
+  }, [bet]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,9 +146,7 @@ export const ApuestaForm: React.FC<ApuestaFormProps> = ({
                     type="number"
                     min="0"
                     max="99"
-                    className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-2xl sm:text-3xl font-bold border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                      bet ? 'bg-gray-100' : 'bg-white hover:border-blue-300'
-                    }`}
+                    className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-2xl sm:text-3xl font-bold border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-center bg-white text-gray-900 border-gray-300"
                     value={a}
                     onChange={(e) => {
                       const value = e.target.value;
@@ -119,7 +154,15 @@ export const ApuestaForm: React.FC<ApuestaFormProps> = ({
                         setA(value);
                       }
                     }}
-                    disabled={!!bet}
+                    disabled={isDisabled}
+                    style={isDisabled ? { 
+                      backgroundColor: '#f3f4f6',
+                      color: '#111827',
+                      fontWeight: 'bold',
+                      opacity: 1,
+                      WebkitTextFillColor: '#111827',
+                      WebkitOpacity: 1
+                    } : {}}
                     required
                   />
                 </div>
@@ -129,9 +172,7 @@ export const ApuestaForm: React.FC<ApuestaFormProps> = ({
                     type="number"
                     min="0"
                     max="99"
-                    className={`w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-2xl sm:text-3xl font-bold border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-                      bet ? 'bg-gray-100' : 'bg-white hover:border-blue-300'
-                    }`}
+                    className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 text-2xl sm:text-3xl font-bold border-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-center bg-white text-gray-900 border-gray-300"
                     value={b}
                     onChange={(e) => {
                       const value = e.target.value;
@@ -139,7 +180,15 @@ export const ApuestaForm: React.FC<ApuestaFormProps> = ({
                         setB(value);
                       }
                     }}
-                    disabled={!!bet}
+                    disabled={isDisabled}
+                    style={isDisabled ? { 
+                      backgroundColor: '#f3f4f6',
+                      color: '#111827',
+                      fontWeight: 'bold',
+                      opacity: 1,
+                      WebkitTextFillColor: '#111827',
+                      WebkitOpacity: 1
+                    } : {}}
                     required
                   />
                 </div>
@@ -170,13 +219,15 @@ export const ApuestaForm: React.FC<ApuestaFormProps> = ({
               </p>
             ) : bet ? (
               <p className="text-center text-green-600 text-xs sm:text-sm font-medium">
-                Ya apostaste este partido
+                {isMatchStarted 
+                  ? 'El partido ya comenzó' 
+                  : 'Puedes modificar tu apuesta hasta que comience el partido'}
               </p>
             ) : null}
           </div>
 
           {/* Botón de acción */}
-          {!bet && (
+          {!isMatchStarted && (
             <div className="pt-2">
               <button
                 type="submit"
@@ -187,7 +238,7 @@ export const ApuestaForm: React.FC<ApuestaFormProps> = ({
                     : 'bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 transform hover:-translate-y-0.5 shadow-md hover:shadow-lg active:scale-95'
                 }`}
               >
-                GUARDAR APUESTA
+                {bet ? 'ACTUALIZAR APUESTA' : 'GUARDAR APUESTA'}
               </button>
             </div>
           )}
