@@ -155,13 +155,30 @@ export const useCompletedMatches = (selectedDate: Date) => {
     }
   }, [selectedDate, allMatches]);
 
-  // Función para filtrar partidos por fecha
+  // Función para filtrar partidos por fecha, teniendo en cuenta la zona horaria de Guatemala (UTC-6)
   const filterMatchesByDate = (matches: Match[], date: Date): Match[] => {
-    const dateStr = date.toISOString().split('T')[0];
+    // Ajustar la fecha seleccionada a la zona horaria de Guatemala
+    const gtDate = new Date(date);
+    gtDate.setHours(gtDate.getHours() + 6); // Ajustar a UTC-6
+    
+    // Obtener año, mes y día en la zona horaria de Guatemala
+    const gtYear = gtDate.getUTCFullYear();
+    const gtMonth = gtDate.getUTCMonth();
+    const gtDay = gtDate.getUTCDate();
+    
     return matches.filter(match => {
+      // Crear fecha del partido
       const matchDate = new Date(match.fecha);
-      const matchDateStr = matchDate.toISOString().split('T')[0];
-      return matchDateStr === dateStr;
+      
+      // Obtener año, mes y día del partido en UTC
+      const matchYear = matchDate.getUTCFullYear();
+      const matchMonth = matchDate.getUTCMonth();
+      const matchDay = matchDate.getUTCDate();
+      
+      // Comparar año, mes y día
+      return matchYear === gtYear && 
+             matchMonth === gtMonth && 
+             matchDay === gtDay;
     });
   };
 

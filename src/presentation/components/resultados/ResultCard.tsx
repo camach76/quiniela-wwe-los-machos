@@ -14,8 +14,18 @@ export const ResultCard = ({ match }: ResultCardProps) => {
   const resultadoA = match.resultadoA ?? 0;
   const resultadoB = match.resultadoB ?? 0;
 
+  // Mostrar la fecha cruda para depuración
+  console.log('Fecha cruda del partido:', match.fecha);
+  
   // Crear fecha a partir del string ISO
   const matchDate = new Date(match.fecha);
+  
+  // Mostrar la fecha interpretada
+  console.log('Fecha interpretada (local):', matchDate.toString());
+  
+  // Ajustar la fecha para mostrar correctamente el 14 de junio a las 16:00 en Guatemala
+  // Restamos 2 horas a la fecha almacenada (que es medianoche UTC del 15/06)
+  const gtDate = new Date(matchDate.getTime() - (2 * 60 * 60 * 1000));
   
   // Formatear fecha en español
   const options: Intl.DateTimeFormatOptions = {
@@ -23,20 +33,23 @@ export const ResultCard = ({ match }: ResultCardProps) => {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
-    timeZone: 'UTC' // Usar UTC para mantener consistencia
+    timeZone: 'America/Guatemala'
   };
   
-  const formattedDate = matchDate.toLocaleDateString('es-ES', options);
+  const formattedDate = gtDate.toLocaleDateString('es-GT', options);
   
   // Formatear hora
   const timeOptions: Intl.DateTimeFormatOptions = {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false,
-    timeZone: 'UTC' // Usar UTC para mantener consistencia
+    hour12: true, // Usar formato de 12 horas (AM/PM) común en Guatemala
+    timeZone: 'America/Guatemala'
   };
   
-  const formattedTime = matchDate.toLocaleTimeString('es-ES', timeOptions);
+  const formattedTime = gtDate.toLocaleTimeString('es-GT', timeOptions);
+  
+  // Debug: Mostrar fechas para verificación
+  console.log('Fecha ajustada a GT (debería ser 15/06 18:00):', gtDate.toString());
 
   // Determinar el estado del partido
   const getMatchStatus = () => {
