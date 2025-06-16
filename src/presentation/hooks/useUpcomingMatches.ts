@@ -1,5 +1,9 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { getCachedData, setCachedData, clearCachedData } from '@/presentation/utils/storage';
+import { SupabaseMatchRepository } from '@/backend/core/infra/repositories/SupabaseMatchRepository';
+import { SupabaseClubRepository } from '@/backend/core/infra/repositories/SupabaseClubRepository';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { supabase } from '@/presentation/utils/supabase/client'; // Cliente de Supabase
 
 const UPCOMING_MATCHES_CACHE_KEY = 'quiniela-upcoming-matches-cache';
 
@@ -63,15 +67,14 @@ export const useUpcomingMatches = (filterDate?: Date) => {
 
       setLoading(true);
       
-      // Obtener partidos
-      const matchesRes = await fetch('/api/match/upcoming');
-      if (!matchesRes.ok) throw new Error('Error al cargar los partidos');
-      const matchesData = await matchesRes.json();
+      // Obtener partidos y clubes usando los repositorios de Supabase
+      const matchRepo = new SupabaseMatchRepository();
+      const clubRepo = new SupabaseClubRepository(supabase);
       
-      // Obtener clubes
-      const clubsRes = await fetch('/api/clubs');
-      if (!clubsRes.ok) throw new Error('Error al cargar los clubes');
-      const clubsData = await clubsRes.json();
+      const [matchesData, clubsData] = await Promise.all([
+        matchRepo.getUpcoming(),
+        clubRepo.getAll()
+      ]);
       
       // Mapear clubes por ID para búsqueda rápida
       const clubsMap = new Map<number, Club>();

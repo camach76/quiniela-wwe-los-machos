@@ -1,8 +1,13 @@
 import { Bet } from "../../domain/entities/betEntity";
 import { BetRepository } from "../../domain/repositories/BetRepository";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 export class SupabaseBetRepository implements BetRepository {
-  constructor(private supabase: any) {}
+  private supabase: any;
+
+  constructor() {
+    this.supabase = createClientComponentClient();
+  }
 
   async create(
     input: Omit<Bet, "id" | "createdAt" | "updatedAt" | "puntosObtenidos">,
@@ -92,26 +97,66 @@ export class SupabaseBetRepository implements BetRepository {
   }
 
   async getByUser(userId: string): Promise<Bet[]> {
-    console.log("🧪 userId:", userId);
-    const { data, error } = await this.supabase
-      .from("bets")
-      .select(
-        "id, user_id, match_id, prediccion_a, prediccion_b, puntos_obtenidos, created_at, updated_at",
-      )
-      .eq("user_id", userId);
+    try {
+      console.log("🔍 Obteniendo apuestas para el usuario:", userId);
+      
+      if (!userId) {
+        console.error('❌ No se proporcionó un ID de usuario válido');
+        return [];
+      }
 
-    if (error) throw new Error(error.message);
+      console.log('🔌 Conectando a Supabase...');
+      
+      // Usamos una consulta más segura que respete las políticas RLS
+      const { data, error, status, statusText } = await this.supabase
+        .from('bets')
+        .select(`
+          id,
+          user_id,
+          match_id,
+          prediccion_a,
+          prediccion_b,
+          puntos_obtenidos,
+          created_at,
+          updated_at
+        `)
+        .eq('user_id', userId);
 
-    return data.map((bet: any) => ({
-      id: bet.id,
-      userId: bet.user_id,
-      matchId: bet.match_id,
-      prediccionA: bet.prediccion_a,
-      prediccionB: bet.prediccion_b,
-      puntosObtenidos: bet.puntos_obtenidos,
-      createdAt: bet.created_at,
-      updatedAt: bet.updated_at,
-    }));
+      console.log('📊 Respuesta de Supabase:', { status, statusText, error });
+
+      if (error) {
+        console.error('❌ Error al obtener apuestas:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint,
+          status: error.status
+        });
+        throw error;
+      }
+
+      console.log(`✅ Se encontraron ${data?.length || 0} apuestas`);
+      
+      return (data || []).map((bet: any) => ({
+        id: bet.id,
+        userId: bet.user_id,
+        matchId: bet.match_id,
+        prediccionA: bet.prediccion_a,
+        prediccionB: bet.prediccion_b,
+        puntosObtenidos: bet.puntos_obtenidos,
+        createdAt: bet.created_at,
+        updatedAt: bet.updated_at,
+      }));
+    } catch (error: unknown) {
+      console.error('❌ Error en getByUser:', error);
+      // Si hay un error de permisos, devolvemos un array vacío
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('permission denied')) {
+        console.warn('⚠️ Permiso denegado al acceder a las apuestas');
+        return [];
+      }
+      throw error;
+    }
   }
 
   async getByMatchAndUser(

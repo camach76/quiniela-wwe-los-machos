@@ -143,8 +143,9 @@ export default function QuinelaPage() {
 
         setUserId(user.id);
 
-        const matchRepo = new SupabaseMatchRepository(supabase);
-        const betRepo = new SupabaseBetRepository(supabase);
+        // Inicializamos los repositorios sin pasar el cliente de Supabase
+        const matchRepo = new SupabaseMatchRepository();
+        const betRepo = new SupabaseBetRepository();
 
         const [upcoming, userBets, allClubs] = await Promise.all([
           matchRepo.getUpcoming(),
@@ -199,7 +200,7 @@ export default function QuinelaPage() {
   ) => {
     if (!userId) return;
 
-    const betRepo = new SupabaseBetRepository(supabase);
+    const betRepo = new SupabaseBetRepository();
 
     try {
       // Primero intentamos obtener la apuesta existente

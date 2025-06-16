@@ -10,6 +10,8 @@ import {
   FaSignOutAlt,
   FaTrophy,
 } from "react-icons/fa";
+import { SupabaseUserRepository } from "@/backend/core/infra/repositories/SupabaseUserReposotory";
+import { supabase } from "@/presentation/utils/supabase/client";
 
 type RankingJugador = {
   id: string;
@@ -39,20 +41,27 @@ export default function RankingPage() {
   useEffect(() => {
     const fetchRanking = async () => {
       try {
-        const res = await fetch("/api/ranking", {
-          credentials: "include",
-        });
-
-        if (!res.ok) {
-          const errorText = await res.text();
-          console.error("Error en /api/ranking:", res.status, errorText);
-          return;
-        }
-
-        const data: RankingJugador[] = await res.json();
-        setJugadores(data);
+        const userRepo = new SupabaseUserRepository(supabase);
+        const users = await userRepo.getRanking();
+        
+        // Obtener la sesión actual para marcar al usuario actual
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        
+        const rankingData: RankingJugador[] = users.map(user => ({
+          id: user.id,
+          nombre: user.username || 'Usuario',
+          puntos: user.puntos || 0,
+          aciertos: user.aciertos || 0,
+          total: user.total_apostados || 0,
+          precision: user.precision || 0,
+          racha: user.racha || 0,
+          avatar: '/images/avatar-placeholder.png', // Avatar por defecto
+          esUsuario: user.id === currentUser?.id
+        }));
+        
+        setJugadores(rankingData);
       } catch (error) {
-        console.error("Error de red en /api/ranking:", error);
+        console.error("Error al cargar el ranking:", error);
       }
     };
 

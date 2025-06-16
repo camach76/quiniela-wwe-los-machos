@@ -1,8 +1,14 @@
 import { Match } from "../../domain/entities/MatchesEntity";
 import { MatchRepository } from "../../domain/repositories/MatchesRepository";
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 export class SupabaseMatchRepository implements MatchRepository {
-  constructor(private supabase: any) {}
+  private supabase: any;
+
+  constructor() {
+    // Usamos createClientComponentClient para asegurar que tengamos la sesión del usuario
+    this.supabase = createClientComponentClient();
+  }
 
   async getAll(): Promise<Match[]> {
     const { data, error } = await this.supabase

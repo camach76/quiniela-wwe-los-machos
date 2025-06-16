@@ -2,13 +2,12 @@ import { useState, useEffect } from 'react';
 import { Bet } from '@/backend/core/domain/entities/betEntity';
 import { BetRepository } from '@/backend/core/domain/repositories/BetRepository';
 import { SupabaseBetRepository } from '@/backend/core/infra/repositories/SupabaseBetRepository';
-import { supabase } from '@/presentation/utils/supabase/client';
 
 export function useBets(userId: string) {
   const [bets, setBets] = useState<Record<string, Bet>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [betRepo] = useState<BetRepository>(new SupabaseBetRepository(supabase));
+  const [betRepo] = useState<BetRepository>(new SupabaseBetRepository());
 
   // Cargar las apuestas del usuario
   const loadUserBets = async () => {
@@ -39,14 +38,16 @@ export function useBets(userId: string) {
     try {
       setLoading(true);
       
-      const betData = {
+      const now = new Date().toISOString();
+      const betData: Bet = {
+        id: 0, // Se generará automáticamente en la base de datos
         userId,
         matchId,
         prediccionA,
         prediccionB,
         puntosObtenidos: 0, // Se actualizará cuando se calcule el resultado
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: now,
+        updatedAt: now,
       };
       
       // Verificar si ya existe una apuesta para este partido
@@ -54,15 +55,13 @@ export function useBets(userId: string) {
       
       if (existingBet) {
         // Actualizar apuesta existente
-        await betRepo.update({
-          id: existingBet.id,
-          userId: existingBet.userId,
-          matchId: existingBet.matchId,
+        const updatedBet: Bet = {
+          ...existingBet, // Mantener todas las propiedades existentes
           prediccionA,
           prediccionB,
-          puntosObtenidos: existingBet.puntosObtenidos,
           updatedAt: new Date().toISOString(),
-        });
+        };
+        await betRepo.update(updatedBet);
       } else {
         // Crear nueva apuesta
         await betRepo.create(betData);

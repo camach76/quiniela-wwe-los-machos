@@ -1,10 +1,7 @@
-import { prisma } from "@/lib/prisma";
+import { SupabaseClubRankingRepository } from "@/backend/core/infra/repositories/SupabaseClubRankingRepository";
+import { supabase } from "@/presentation/utils/supabase/client";
 
 export async function getClubRanking() {
-  const res = await fetch('/api/club_ranking');
-  if (!res.ok) {
-    throw new Error('Error al obtener ranking de clubes: ' + res.statusText);
-  }
-  return res.json(); // esperá array con { club, pj, g, e, p, gf, gc, dg, pts, forma }
+  const repo = new SupabaseClubRankingRepository(supabase);
+  return await repo.getAll();
 }
-
