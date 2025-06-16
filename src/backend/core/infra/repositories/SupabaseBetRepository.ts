@@ -101,7 +101,6 @@ export class SupabaseBetRepository implements BetRepository {
 
       console.log("🔌 Conectando a Supabase...");
 
-      // Usamos una consulta más segura que respete las políticas RLS
       const { data, error, status, statusText } = await this.supabase
         .from("bets")
         .select(`*`)
