@@ -1,5 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import Image, { ImageProps } from 'next/image';
+import Image from 'next/image';
+
+// Mapeo de nombres de equipos a URLs de imágenes locales
+const TEAM_LOGO_MAP: Record<string, string> = {
+  'Urawa Red Diamonds': '/images/logos/urawa-red-diamonds.png',
+  'River Plate': '/images/logos/river-plate.png',
+  'Mamelodi Sundowns': '/images/logos/mamelodi-sundowns.png',
+  // Logo predeterminado para equipos sin imagen
+  'default': '/images/logos/default-team-logo.svg',
+  // Agrega más mapeos según sea necesario
+};
 
 // Función para generar una clave de caché única basada en la URL de la imagen
 const getCacheKey = (url: string) => `team-logo-cache:${btoa(url)}`;
@@ -21,6 +31,19 @@ type TeamLogoProps = {
   bgColor?: string;
 };
 
+// Función para obtener la URL de la imagen del equipo
+const getTeamLogoUrl = (teamName: string, logoUrl?: string | null): string => {
+  // Primero intentar con el mapeo local
+  const mappedLogo = TEAM_LOGO_MAP[teamName];
+  if (mappedLogo) return mappedLogo;
+  
+  // Si hay una URL proporcionada, usarla
+  if (logoUrl) return logoUrl;
+  
+  // Si no hay URL, usar el logo predeterminado
+  return TEAM_LOGO_MAP['default'] || '';
+};
+
 export const TeamLogo = ({
   name = 'Team',
   logoUrl,
@@ -31,10 +54,17 @@ export const TeamLogo = ({
   const [imageError, setImageError] = useState(false);
   const [isImageValid, setIsImageValid] = useState<boolean | null>(null);
   const [cachedImage, setCachedImage] = useState<string | null>(null);
+  const [finalLogoUrl, setFinalLogoUrl] = useState<string | null>(null);
 
   // Verificar si la URL de la imagen está en caché y es válida
   const checkImageCache = useCallback((url: string) => {
     if (!url) return false;
+
+    // Si es una ruta local, no usar caché
+    if (url.startsWith('/')) {
+      setCachedImage(url);
+      return true;
+    }
 
     try {
       const cacheKey = getCacheKey(url);
@@ -187,52 +217,65 @@ export const TeamLogo = ({
     );
   }
 
-  // Si no hay URL de logo o hubo un error, mostrar las iniciales
-  if (!logoUrl || !isImageValid || imageError) {
+  // Si hay un error o la imagen no es válida, mostrar un placeholder
+  if (imageError || isImageValid === false) {
     return (
-      <div 
-        className={`flex items-center justify-center rounded-full ${className}`}
+      <div
+        className={`flex items-center justify-center rounded-full bg-gray-200 ${className}`}
         style={{
-          width: `${size}px`,
-          height: `${size}px`,
+          width: size,
+          minWidth: size,
+          height: size,
           backgroundColor: bgColor,
-          fontSize: `${size * 0.4}px`,
-          fontWeight: 'bold',
-          color: '#4b5563', // gray-600
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
         }}
       >
-        {getInitials(name)}
+        <span 
+          className="text-xs font-medium text-gray-500 text-center"
+          style={{
+            fontSize: Math.max(8, size * 0.25),
+            lineHeight: 1,
+            padding: 4,
+          }}
+        >
+          {name
+            .split(' ')
+            .map((word) => word[0] || '')
+            .join('')
+            .toUpperCase()
+            .substring(0, 2) || 'T'}
+        </span>
       </div>
     );
   }
 
-  // Mostrar la imagen del logo
+  // Renderizar la imagen si está disponible
   return (
-    <div className={`relative ${className}`} style={{ width: `${size}px`, height: `${size}px` }}>
-      <div 
-        className="absolute inset-0 rounded-full" 
-        style={{ backgroundColor: bgColor }}
-      />
-      {cachedImage ? (
+    <div className={`relative ${className}`} style={{ width: size, height: size }}>
+      {cachedImage && (
         <Image
           src={cachedImage}
-          alt={name}
+          alt={`${name} logo`}
           width={size}
           height={size}
-          className="relative z-10 object-contain p-1 rounded-full"
-          onError={() => setImageError(true)}
-          unoptimized={true}
-        />
-      ) : (
-        <Image
-          src={logoUrl}
-          alt={name}
-          width={size}
-          height={size}
-          className="relative z-10 object-contain p-1 rounded-full"
-          onError={() => setImageError(true)}
+          className="rounded-full object-cover"
+          onError={() => {
+            setImageError(true);
+            setIsImageValid(false);
+          }}
+          onLoadingComplete={(result) => {
+            if (result.naturalWidth === 0) {
+              setImageError(true);
+              setIsImageValid(false);
+            } else {
+              setIsImageValid(true);
+            }
+          }}
         />
       )}
     </div>
   );
-};
+}

@@ -7,7 +7,12 @@ const config: Config = {
     "./src/backend/**/*.{ts,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ['var(--font-sans)'],
+        quicksand: ['var(--font-quicksand)'],
+      },
+    },
   },
   plugins: [],
 };

@@ -68,7 +68,7 @@ export class SupabaseBetRepository implements BetRepository {
     };
   }
 
-  async getById(betId: string): Promise<Bet | null> {
+  async getById(betId: number): Promise<Bet | null> {
     const { data, error } = await this.supabase
       .from("bets")
       .select("*")

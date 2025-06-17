@@ -41,6 +41,6 @@ export function useClubs() {
     clubs,
     loading,
     error,
-    getClubById: (id: number) => clubs[id] || { id, nombre: `Equipo ${id}`, pais: 'Desconocido', logoUrl: '' },
+    getClubById: (id: number) => clubs[id] || { id, nombre: `Equipo ${id}`, pais: 'Desconocido', logo_url: '' },
   };
 }

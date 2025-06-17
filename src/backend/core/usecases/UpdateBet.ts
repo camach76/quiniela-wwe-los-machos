@@ -1,7 +1,7 @@
 import { BetRepository } from "../domain/repositories/BetRepository";
 
 export type UpdateBetInput = {
-  betId: string;
+  betId: number;
   prediccionA: number | null;
   prediccionB: number | null;
 };
@@ -23,11 +23,17 @@ export class UpdateBet {
       throw new Error('Los pronósticos deben ser números enteros no negativos');
     }
 
+    // Obtener la apuesta actual para preservar los valores existentes
+    const existingBet = await this.betRepo.getById(betId);
+    if (!existingBet) {
+      throw new Error('Apuesta no encontrada');
+    }
+
     // Actualizar el pronóstico
     const updatedBet = await this.betRepo.update({
-      id: betId,
-      prediccionA,
-      prediccionB
+      ...existingBet,
+      prediccionA: prediccionA !== null ? prediccionA : existingBet.prediccionA,
+      prediccionB: prediccionB !== null ? prediccionB : existingBet.prediccionB
     });
 
     return updatedBet;

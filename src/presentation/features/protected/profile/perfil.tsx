@@ -1,8 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useState, ChangeEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
+
+interface RedesSociales {
+  facebook: string;
+  twitter: string;
+  instagram: string;
+  [key: string]: string;
+}
+
+interface Notificaciones {
+  email: boolean;
+  push: boolean;
+  [key: string]: boolean;
+}
+
+interface Logro {
+  id: number;
+  nombre: string;
+  descripcion: string;
+  completado: boolean;
+  fecha?: string;
+  progreso?: number;
+  total?: number;
+  icono: string;
+}
+
+interface DatosUsuario {
+  nombre: string;
+  usuario: string;
+  email: string;
+  telefono: string;
+  ubicacion: string;
+  biografia: string;
+  sitioWeb: string;
+  redes: RedesSociales;
+  notificaciones: Notificaciones;
+  [key: string]: any; // Para permitir acceso dinámico a las propiedades
+}
 import {
   FaSignOutAlt,
   FaBell,
@@ -31,7 +68,7 @@ import {
 export default function Perfil() {
   const [modoEdicion, setModoEdicion] = useState(false);
   const [pestanaActiva, setPestanaActiva] = useState("general");
-  const [datosUsuario, setDatosUsuario] = useState({
+  const [datosUsuario, setDatosUsuario] = useState<DatosUsuario>({
     nombre: "Carlos Rodríguez",
     usuario: "carlos_r",
     email: "carlos@ejemplo.com",
@@ -68,7 +105,7 @@ export default function Perfil() {
   };
 
   // Datos de ejemplo para logros
-  const logros = [
+  const logros: Logro[] = [
     {
       id: 1,
       nombre: "Principiante",
@@ -182,8 +219,12 @@ export default function Perfil() {
   ];
 
   // Función para manejar cambios en los datos del usuario
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const target = e.target as HTMLInputElement;
+    const { name, value, type } = target;
+    const checked = 'checked' in target ? target.checked : undefined;
 
     if (name.includes(".")) {
       const [parent, child] = name.split(".");
@@ -210,7 +251,7 @@ export default function Perfil() {
   };
 
   // Función para renderizar el icono según el tipo de actividad
-  const renderIconoActividad = (tipo) => {
+  const renderIconoActividad = (tipo: 'pronostico' | 'ranking' | 'logro' | string) => {
     switch (tipo) {
       case "pronostico":
         return <FaChartLine className="text-blue-500" />;
@@ -778,7 +819,7 @@ export default function Perfil() {
                                 {logro.descripcion}
                               </p>
 
-                              {!logro.completado && (
+                              {!logro.completado && logro.progreso !== undefined && logro.total !== undefined && (
                                 <div className="mt-2">
                                   <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
                                     <span>Progreso</span>

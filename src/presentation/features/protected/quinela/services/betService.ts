@@ -66,6 +66,20 @@ export class BetService {
 
     return data;
   }
+
+  async getByUser(userId: string): Promise<Bet[]> {
+    const { data, error } = await this.supabase
+      .from('bets')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Error al obtener las apuestas del usuario:', error);
+      throw new Error('Error al cargar las apuestas');
+    }
+
+    return data || [];
+  }
 }
 
 export const betService = new BetService();

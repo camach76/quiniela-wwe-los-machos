@@ -160,8 +160,7 @@ export const ApuestaForm: React.FC<ApuestaFormProps> = ({
                       color: '#111827',
                       fontWeight: 'bold',
                       opacity: 1,
-                      WebkitTextFillColor: '#111827',
-                      WebkitOpacity: 1
+                      WebkitTextFillColor: '#111827'
                     } : {}}
                     required
                   />
@@ -186,8 +185,7 @@ export const ApuestaForm: React.FC<ApuestaFormProps> = ({
                       color: '#111827',
                       fontWeight: 'bold',
                       opacity: 1,
-                      WebkitTextFillColor: '#111827',
-                      WebkitOpacity: 1
+                      WebkitTextFillColor: '#111827'
                     } : {}}
                     required
                   />

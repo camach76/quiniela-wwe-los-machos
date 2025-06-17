@@ -1,34 +1,42 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { useCallback } from 'react';
+import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/presentation/utils/supabase/client";
 
 export function useGoogleLogin() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams.get('redirectedFrom') || '/dashboard';
-  const supabase = createClientComponentClient();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const signInWithGoogle = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      const { error: signInError } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(redirectTo)}`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          },
-        },
+          redirectTo: `${window.location.origin}/dashboard`
+        }
       });
 
-      if (error) throw error;
+      if (signInError) throw signInError;
+      
+      return { data: null, error: null };
     } catch (error) {
-      console.error('Error signing in with Google:', error);
-      throw error;
+      console.error('Error al iniciar sesión con Google:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      setError(errorMessage);
+      return { data: null, error: errorMessage };
+    } finally {
+      setIsLoading(false);
     }
-  }, [redirectTo, supabase.auth]);
+  }, []);
 
-  return { signInWithGoogle };
+  return {
+    signInWithGoogle,
+    isLoading,
+    error,
+  };
 }

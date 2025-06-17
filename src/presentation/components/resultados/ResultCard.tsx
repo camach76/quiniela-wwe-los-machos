@@ -1,5 +1,6 @@
 import { Match } from '@/presentation/hooks/useCompletedMatches';
 import { TeamLogo } from '@/presentation/components/TeamLogo';
+import Image from 'next/image';
 
 interface ResultCardProps {
   match: Match;
@@ -67,10 +68,13 @@ export const ResultCard = ({ match }: ResultCardProps) => {
     <div className="relative w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200 hover:shadow-2xl transition-all duration-300 flex flex-col">
       {/* Fondo con opacidad */}
       <div className="absolute inset-0 overflow-hidden">
-        <img 
+        <Image 
           src="/images/bgFifa.jpg" 
           alt="Fondo de la tarjeta"
           className="w-full h-full object-cover opacity-30"
+          fill
+          priority
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
       </div>
       

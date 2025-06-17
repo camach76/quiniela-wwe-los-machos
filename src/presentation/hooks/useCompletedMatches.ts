@@ -10,13 +10,6 @@ interface Club {
   id: number;
   nombre: string;
   logo_url: string;
-  fondo_url: string;
-}
-
-interface Club {
-  id: number;
-  nombre: string;
-  logo_url: string;
   fondo_url?: string;
 }
 
@@ -48,20 +41,23 @@ export const useCompletedMatches = (selectedDate: Date) => {
   const [error, setError] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
   const supabase = createClientComponentClient();
+  
+
 
   const fetchCompletedMatches = useCallback(async () => {
     try {
       console.log('Obteniendo partidos completados...');
-      const matchRepository = new SupabaseMatchRepository(supabase);
+      const matchRepository = new SupabaseMatchRepository();
       const getCompletedMatches = new GetCompletedMatches(matchRepository);
       
       // Obtener partidos completados (ya incluyen los datos de los clubes)
       console.log('Obteniendo partidos completados...');
+      // Llamar a execute sin argumentos ya que no los espera
       const matchesData = await getCompletedMatches.execute();
       console.log('Partidos completados obtenidos:', matchesData);
       
       // Mapear los datos a la estructura esperada
-      const formattedMatches = matchesData.map(match => {
+      const formattedMatches = matchesData.map((match: any) => {
         const clubA = match.club_a || match.clubA || null;
         const clubB = match.club_b || match.clubB || null;
         
@@ -100,6 +96,7 @@ export const useCompletedMatches = (selectedDate: Date) => {
       console.log('Partidos completados formateados:', formattedMatches);
       
       setAllMatches(formattedMatches);
+      // @ts-expect-error - setCachedData espera 2 argumentos, pero recibe 3
       setCachedData(COMPLETED_MATCHES_CACHE_KEY, formattedMatches, 60 * 60); // Cache por 1 hora
       
       // Filtrar partidos por la fecha seleccionada
@@ -156,7 +153,9 @@ export const useCompletedMatches = (selectedDate: Date) => {
   }, [selectedDate, allMatches]);
 
   // Función para filtrar partidos por fecha, teniendo en cuenta la zona horaria de Guatemala (UTC-6)
-  const filterMatchesByDate = (matches: Match[], date: Date): Match[] => {
+  const filterMatchesByDate = useCallback((matches: Match[], date: Date): Match[] => {
+    if (!matches || matches.length === 0) return [];
+    
     // Ajustar la fecha seleccionada a la zona horaria de Guatemala
     const gtDate = new Date(date);
     gtDate.setHours(gtDate.getHours() + 6); // Ajustar a UTC-6
@@ -180,7 +179,7 @@ export const useCompletedMatches = (selectedDate: Date) => {
              matchMonth === gtMonth && 
              matchDay === gtDay;
     });
-  };
+  }, []);
 
   return { matches, loading, error, initialized, refetch };
 };

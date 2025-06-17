@@ -17,7 +17,7 @@ export class SupabaseClubRepository implements ClubRepository {
         id: club.id,
         nombre: club.nombre,
         pais: club.pais,
-        logoUrl: club.logo_url
+        logo_url: club.logo_url
       }));
     }
   
@@ -34,7 +34,7 @@ export class SupabaseClubRepository implements ClubRepository {
         id: data.id,
         nombre: data.nombre,
         pais: data.pais,
-        logoUrl: data.logo_url
+        logo_url: data.logo_url
       };
     }
   }

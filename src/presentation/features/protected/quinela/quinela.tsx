@@ -8,8 +8,18 @@ import { Bet } from "@/backend/core/domain/entities/betEntity";
 import { Club } from "@/types/partidos";
 import { clubService } from "@/backend/core/services/clubService";
 import { ApuestaForm } from "@/presentation/components/quiniela/quinelaApuesta/apuestaForm";
-import { format, parseISO, isToday, isTomorrow, isYesterday, isThisWeek, isSameDay } from 'date-fns';
+import { format, isToday, isTomorrow, isYesterday, isThisWeek, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
+
+// Función auxiliar para formatear fechas con manejo de errores
+const safeParseISO = (dateString: string): Date => {
+  try {
+    return new Date(dateString);
+  } catch (error) {
+    console.error('Error al analizar la fecha:', dateString, error);
+    return new Date(); // Retorna la fecha actual como valor por defecto
+  }
+};
 
 type PartidoConClubes = {
   id: string;
@@ -60,11 +70,11 @@ export default function QuinelaPage() {
     
     // Ordenar partidos por fecha
     const sortedMatches = [...matches].sort((a, b) => 
-      new Date(a.fecha).getTime() - new Date(b.fecha).getTime()
+      safeParseISO(a.fecha).getTime() - safeParseISO(b.fecha).getTime()
     );
 
     sortedMatches.forEach((match: PartidoConClubes) => {
-      const matchDate = new Date(match.fecha);
+      const matchDate = safeParseISO(match.fecha);
       const dateKey = matchDate.toDateString();
       
       if (!dates.has(dateKey)) {
@@ -83,10 +93,10 @@ export default function QuinelaPage() {
           startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1); // Lunes de esta semana
           
           if (matchDate >= startOfWeek) {
-            dateLabel = format(matchDate, 'EEEE', { locale: es });
+            dateLabel = format(matchDate, 'EEEE');
             dateLabel = dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1);
           } else {
-            dateLabel = format(matchDate, 'EEEE d MMMM', { locale: es });
+            dateLabel = format(matchDate, 'EEEE d MMMM');
             dateLabel = dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1);
           }
         }
@@ -127,7 +137,8 @@ export default function QuinelaPage() {
   const getDayLabel = (date: Date) => {
     if (isToday(date)) return 'Hoy';
     if (isTomorrow(date)) return 'Mañana';
-    return format(date, 'EEEE', { locale: es });
+    const dayName = format(date, 'EEEE');
+    return dayName.charAt(0).toUpperCase() + dayName.slice(1);
   };
 
   useEffect(() => {
@@ -264,7 +275,7 @@ export default function QuinelaPage() {
               >
                 <div className="font-medium">{getDayLabel(date)}</div>
                 <div className="text-xs opacity-80">
-                  {format(date, 'd MMM', { locale: es })}
+                  {format(date, 'd MMM')}
                 </div>
               </button>
             ))}
@@ -303,7 +314,7 @@ export default function QuinelaPage() {
                         </div>
                       </div>
                       <div className="mt-2 text-sm text-gray-500 text-center">
-                        {format(parseISO(match.fecha), 'HH:mm')} hs
+                        {format(safeParseISO(match.fecha), 'HH:mm')} hs
                       </div>
                     </div>
                   ))}

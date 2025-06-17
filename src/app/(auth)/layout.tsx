@@ -1,5 +1,9 @@
-import { LayoutProps } from "@/types/next";
+import { ReactNode } from 'react';
 
-export default function AuthLayout({ children }: LayoutProps) {
+type AuthLayoutProps = {
+  children: ReactNode;
+};
+
+export default function AuthLayout({ children }: AuthLayoutProps) {
   return <div>{children}</div>;
 }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Match } from '../../../../hooks/useCompletedMatches';
+import Image from 'next/image';
+import { Match } from '../../../../../presentation/hooks/useCompletedMatches';
 import { useBets } from '../hooks/useBets';
 import { betService } from '../services/betService';
 
@@ -46,22 +47,30 @@ export function MatchCard({ match, userId, onBetSaved }: MatchCardProps) {
       <div className="flex justify-between items-center mb-4">
         <div className="text-center flex-1">
           <div className="font-semibold">{match.clubA?.nombre || 'Equipo Local'}</div>
-          <img 
-            src={match.clubA?.logo_url || '/images/default-logo.png'} 
-            alt={match.clubA?.nombre || 'Local'} 
-            className="h-16 mx-auto my-2"
-          />
+          <div className="relative h-16 w-16 mx-auto my-2">
+            <Image 
+              src={match.clubA?.logo_url || '/images/default-logo.png'} 
+              alt={match.clubA?.nombre || 'Local'} 
+              fill
+              className="object-contain"
+              sizes="4rem"
+            />
+          </div>
         </div>
         
         <div className="text-2xl font-bold mx-4">VS</div>
         
         <div className="text-center flex-1">
           <div className="font-semibold">{match.clubB?.nombre || 'Equipo Visitante'}</div>
-          <img 
-            src={match.clubB?.logo_url || '/images/default-logo.png'} 
-            alt={match.clubB?.nombre || 'Visitante'} 
-            className="h-16 mx-auto my-2"
-          />
+          <div className="relative h-16 w-16 mx-auto my-2">
+            <Image 
+              src={match.clubB?.logo_url || '/images/default-logo.png'} 
+              alt={match.clubB?.nombre || 'Visitante'} 
+              fill
+              className="object-contain"
+              sizes="4rem"
+            />
+          </div>
         </div>
       </div>
 

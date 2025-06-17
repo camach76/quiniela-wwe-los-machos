@@ -1,17 +1,23 @@
-import { useState } from 'react';
-import { useUser } from '@supabase/auth-helpers-react';
-import { Match } from '../../../hooks/useCompletedMatches';
+import { useState, useMemo } from 'react';
 import { MatchCard } from './components/MatchCard';
-import { useCompletedMatches } from '../../../hooks/useCompletedMatches';
-import { ProtectedLayout } from '../../../layouts/ProtectedLayout';
+import { Match, useCompletedMatches } from '../../../../presentation/hooks/useCompletedMatches';
+import { ProtectedLayout } from '../../../../presentation/layouts/ProtectedLayout';
+import { useUser } from '../../../../hooks/useAuth';
+
+// Usar el tipo Match directamente ya que es lo que espera MatchCard
+import type { Match as MatchType } from '../../../../presentation/hooks/useCompletedMatches';
 
 export function QuinelaPage() {
-  const user = useUser();
-  const { matches: completedMatches, loading, error, refetch } = useCompletedMatches();
+  const { user, loading: userLoading } = useUser();
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const { matches: completedMatches, loading, error, refetch } = useCompletedMatches(selectedDate);
   const [activeTab, setActiveTab] = useState<'upcoming' | 'completed'>('upcoming');
   
-  // Aquí deberías implementar useUpcomingMatches similar a useCompletedMatches
-  const upcomingMatches: Match[] = []; // Reemplazar con el hook correspondiente
+  // Para propósitos de ejemplo, usaremos los partidos completados como próximos también
+  // En una implementación real, deberías usar un hook como useUpcomingMatches
+  const upcomingMatches: Match[] = useMemo(() => {
+    return []; // Por ahora vacío hasta que se implemente el hook correspondiente
+  }, []);
   
   const handleBetSaved = () => {
     // Recargar datos si es necesario
@@ -35,7 +41,9 @@ export function QuinelaPage() {
     );
   }
 
-  const matchesToShow = activeTab === 'upcoming' ? upcomingMatches : completedMatches;
+  const matchesToShow: MatchType[] = activeTab === 'upcoming' 
+    ? upcomingMatches 
+    : completedMatches;
 
   return (
     <ProtectedLayout>
@@ -61,7 +69,7 @@ export function QuinelaPage() {
       {/* Lista de partidos */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {matchesToShow.length > 0 ? (
-          matchesToShow.map((match) => (
+          matchesToShow.map((match: MatchType) => (
             <MatchCard 
               key={match.id} 
               match={match} 

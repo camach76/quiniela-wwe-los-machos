@@ -6,7 +6,26 @@ import { getClubRanking } from "@/lib/api";
 import { TeamLogo } from "@/presentation/components/TeamLogo";
 
 export default function TablaRankingClubes() {
-  const [ranking, setRanking] = useState([]);
+  const [ranking, setRanking] = useState<Array<{
+    userId: string;
+    puntajeTotal: number;
+    updatedAt: string;
+    pj: number;
+    g: number;
+    e: number;
+    p: number;
+    gf: number;
+    gc: number;
+    dg: number;
+    pts: number;
+    forma: string[];
+    club_id?: string;
+    club?: {
+      id: string;
+      nombre: string;
+      logo: string;
+    };
+  }>>([]);
   const userName = "Usuario";
 
   useEffect(() => {
@@ -25,44 +44,44 @@ export default function TablaRankingClubes() {
             <thead className="bg-gray-800 text-white">
               <tr>
                 {[
-                  "#",
-                  "Escudo",
-                  "Club",
-                  "PJ",
-                  "G",
-                  "E",
-                  "P",
-                  "GF",
-                  "GC",
-                  "DG",
-                  "PTS",
-                ].map((h) => (
-                  <th key={h} className="p-2">
-                    {h}
+                  { id: 'pos', label: '#' },
+                  { id: 'escudo', label: 'Escudo' },
+                  { id: 'club', label: 'Club' },
+                  { id: 'pj', label: 'PJ' },
+                  { id: 'g', label: 'G' },
+                  { id: 'e', label: 'E' },
+                  { id: 'p', label: 'P' },
+                  { id: 'gf', label: 'GF' },
+                  { id: 'gc', label: 'GC' },
+                  { id: 'dg', label: 'DG' },
+                  { id: 'pts', label: 'PTS' },
+                ].map((header) => (
+                  <th key={header.id} className="p-2">
+                    {header.label}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {ranking.map((item: any, idx: number) => (
-                <tr key={item.club.id} className="border-b">
-                  <td className="p-2">{idx + 1}</td>
-                  <td className="p-2">
-                    <TeamLogo
-                      name={item.club.nombre}
-                      logoUrl={item.club.logo_url}
-                      size={32}
+              {ranking.map((club, index) => (
+                <tr key={club.userId} className="border-b hover:bg-gray-50">
+                  <td className="px-4 py-2">{index + 1}</td>
+                  <td className="px-4 py-2">
+                    <TeamLogo 
+                      name={club.club?.nombre || 'Club'} 
+                      logoUrl={club.club?.logo || ''} 
+                      size={24} 
                     />
                   </td>
-                  <td className="p-2">{item.club.nombre}</td>
-                  <td className="p-2">{item.pj}</td>
-                  <td className="p-2">{item.g}</td>
-                  <td className="p-2">{item.e}</td>
-                  <td className="p-2">{item.p}</td>
-                  <td className="p-2">{item.gf}</td>
-                  <td className="p-2">{item.gc}</td>
-                  <td className="p-2">{item.dg}</td>
-                  <td className="p-2 font-bold">{item.pts}</td>
+                  <td className="px-4 py-2 font-medium">{club.club?.nombre || 'Club'}</td>
+                  <td className="px-4 py-2 text-center">{club.pj}</td>
+                  <td className="px-4 py-2 text-center">{club.g}</td>
+                  <td className="px-4 py-2 text-center">{club.e}</td>
+                  <td className="px-4 py-2 text-center">{club.p}</td>
+                  <td className="px-4 py-2 text-center">{club.gf}</td>
+                  <td className="px-4 py-2 text-center">{club.gc}</td>
+                  <td className="px-4 py-2 text-center font-bold">{club.dg}</td>
+                  <td className="px-4 py-2 text-center font-bold">{club.pts}</td>
                 </tr>
               ))}
             </tbody>

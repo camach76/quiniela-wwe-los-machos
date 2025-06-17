@@ -171,25 +171,13 @@ export default function LoginForm() {
             </div>
 
             {/* Social Login */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3">
               <button
                 type="button"
                 onClick={() => signInWithGoogle()}
                 className="inline-flex justify-center items-center py-2.5 border border-gray-300 rounded-xl bg-white hover:bg-gray-50 transition-colors"
               >
                 <FaGoogle className="text-red-500" />
-              </button>
-              <button
-                type="button"
-                className="inline-flex justify-center items-center py-2.5 border border-gray-300 rounded-xl bg-white hover:bg-gray-50 transition-colors"
-              >
-                <FaFacebook className="text-blue-600" />
-              </button>
-              <button
-                type="button"
-                className="inline-flex justify-center items-center py-2.5 border border-gray-300 rounded-xl bg-white hover:bg-gray-50 transition-colors"
-              >
-                <FaApple className="text-gray-800" />
               </button>
             </div>
           </form>

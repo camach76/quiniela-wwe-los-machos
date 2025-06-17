@@ -17,7 +17,7 @@ interface NavbarProps {
 export const Navbar = ({
   appName = "Quiniela Los Machos",
   logoUrl = "/images/logo.png",
-  showNotifications = true,
+  showNotifications = true, // Este prop se mantiene por compatibilidad
   className = "",
 }: NavbarProps) => {
   const { user } = useUserSession();
@@ -28,6 +28,9 @@ export const Navbar = ({
   if (user?.email && userName === "Usuario") {
     setUserName(user.email.split('@')[0]);
   }
+  
+  // Deshabilitar notificaciones temporalmente
+  const shouldShowNotifications = false;
 
   return (
     <nav className={`bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-10 flex items-center justify-between px-4 lg:px-6 py-3 ${className}`}>
@@ -62,7 +65,7 @@ export const Navbar = ({
 
       {/* Controles de usuario */}
       <div className="flex items-center gap-3 md:gap-4">
-        {showNotifications && (
+        {shouldShowNotifications && (
           <button 
             className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
             aria-label="Notificaciones"
@@ -71,7 +74,7 @@ export const Navbar = ({
           </button>
         )}
         
-        {showNotifications && <div className="h-6 w-px bg-gray-200"></div>}
+        {shouldShowNotifications && <div className="h-6 w-px bg-gray-200"></div>}
         
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium text-sm md:text-base">

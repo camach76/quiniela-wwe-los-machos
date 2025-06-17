@@ -1,12 +1,8 @@
 import { useEffect, useState } from "react";
-import { clubService } from "@/backend/core/services/clubService";
-import { matchService } from "@/backend/core/services/matchService";
-import { betService } from "../services/betService";
-import type { Bet } from "@/backend/core/domain/entities/betEntity";
-import type { Match } from "@/backend/core/domain/entities/MatchesEntity";
-import type { Club } from "@/backend/core/domain/entities/clubEntity";
+import { betService, type Bet } from "../services/betService";
+import type { Partido } from "@/types/partidos";
 
-export interface BetDisplay {
+interface BetDisplay {
   betId: number;
   prediccionA: number;
   prediccionB: number;
@@ -16,8 +12,16 @@ export interface BetDisplay {
   isComplete: boolean;
   resultadoA: number | null;
   resultadoB: number | null;
-  clubA: Club;
-  clubB: Club;
+  clubA: {
+    id: string;
+    nombre: string;
+    logo: string;
+  };
+  clubB: {
+    id: string;
+    nombre: string;
+    logo: string;
+  };
 }
 
 export const useUserBets = (userId: string) => {
@@ -34,7 +38,7 @@ export const useUserBets = (userId: string) => {
 
       try {
         // 1. Obtener apuestas del usuario
-        const bets: Bet[] = await betService.getByUser(userId);
+        const bets = await betService.getByUser(userId);
 
         if (!bets.length) {
           setQuiniela([]);
@@ -42,42 +46,42 @@ export const useUserBets = (userId: string) => {
           return;
         }
 
-        // 2. Obtener los partidos relacionados
-        const matchIds = bets.map((b) => b.matchId);
-        const matches: Match[] = await matchService.getManyByIds(matchIds);
+        // 2. Obtener los partidos relacionados (simulados para el ejemplo)
+        // En una implementación real, esto vendría de tu API
+        const matches: Partido[] = [];
 
-        // 3. Obtener todos los clubes (menos consultas)
-        const clubs: Club[] = await clubService.getAll();
-
-        // 4. Enriquecer cada apuesta
+        // 3. Mapear a formato de visualización
         const enriched: BetDisplay[] = bets
           .map((bet) => {
-            const match = matches.find((m) => m.id === bet.matchId);
-            const clubA = clubs.find((c) => c.id === Number(match?.club_a_id));
-            const clubB = clubs.find((c) => c.id === Number(match?.club_b_id));
-
-            if (!match || !clubA || !clubB) return null;
-
+            // Esto es un ejemplo - en una implementación real, deberías obtener los datos reales
+            // de los partidos y clubes desde tu API
             return {
-              betId: bet.id,
+              betId: bet.id || 0,
               prediccionA: bet.prediccion_a,
               prediccionB: bet.prediccion_b,
-              puntos: bet.puntosObtenidos,
-              matchDate: match.fecha,
-              estadio: match.estadio,
-              isComplete: match.is_complete ?? false,
-              resultadoA: match.resultado_a,
-              resultadoB: match.resultado_b,
-              clubA,
-              clubB,
+              puntos: bet.puntos || 0,
+              matchDate: new Date().toISOString(), // Fecha de ejemplo
+              estadio: 'Estadio de ejemplo', // Estadio de ejemplo
+              isComplete: false, // Por defecto no completado
+              resultadoA: null,
+              resultadoB: null,
+              clubA: {
+                id: '1',
+                nombre: 'Equipo A',
+                logo: '/path/to/logo-a.png'
+              },
+              clubB: {
+                id: '2',
+                nombre: 'Equipo B',
+                logo: '/path/to/logo-b.png'
+              }
             };
-          })
-          .filter(Boolean) as BetDisplay[];
+          });
 
         setQuiniela(enriched);
       } catch (err) {
-        console.error(err);
-        setError("Ocurrió un error al cargar tus pronósticos");
+        console.error('Error al cargar la quiniela:', err);
+        setError('Error al cargar las apuestas');
       } finally {
         setLoading(false);
       }
@@ -86,9 +90,5 @@ export const useUserBets = (userId: string) => {
     fetchData();
   }, [userId]);
 
-  return {
-    quiniela,
-    loading,
-    error,
-  };
+  return { quiniela, loading, error };
 };
