@@ -1,0 +1,21 @@
+# Ignorar archivos generados por Prisma
+/src/generated/**
+
+# Ignorar archivos de node_modules
+node_modules/
+
+# Ignorar archivos de build
+.next/
+build/
+dist/
+
+# Ignorar archivos de entorno
+.env*.local
+
+# Ignorar archivos de configuración de IDEs
+.vscode/
+.idea/
+
+# Ignorar archivos temporales
+*.log
+*.tmp
