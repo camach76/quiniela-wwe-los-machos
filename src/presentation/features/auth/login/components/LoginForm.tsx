@@ -1,8 +1,7 @@
 "use client";
 
 import type React from "react";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLogin } from "../hooks/useLogin";
 import { useGoogleLogin } from "../hooks/useGoogleLogin";
 import {
@@ -15,6 +14,8 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 
+const STORAGE_KEY = 'quiniela_auth_credentials';
+
 export default function LoginForm() {
   const { mutate, isPending } = useLogin();
   const [email, setEmail] = useState("");
@@ -22,9 +23,34 @@ export default function LoginForm() {
   const [rememberMe, setRememberMe] = useState(false);
   const { signInWithGoogle } = useGoogleLogin();
 
+  // Cargar credenciales guardadas al montar el componente
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedCredentials = localStorage.getItem(STORAGE_KEY);
+      if (savedCredentials) {
+        try {
+          const { email: savedEmail, password: savedPassword } = JSON.parse(savedCredentials);
+          setEmail(savedEmail);
+          setPassword(savedPassword);
+          setRememberMe(true);
+        } catch (error) {
+          console.error('Error al cargar credenciales guardadas:', error);
+        }
+      }
+    }
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    mutate({ email, password });
+    
+    // Guardar o eliminar credenciales según el estado de rememberMe
+    if (rememberMe) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ email, password }));
+    } else {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+    
+    mutate({ email, password, rememberMe });
   };
 
   return (

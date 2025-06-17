@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/presentation/utils/supabase/client';
 
-export default function AuthPopup() {
+// Componente interno que usa useSearchParams
+function AuthPopupContent() {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState('Cargando...');
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +67,7 @@ export default function AuthPopup() {
               access_type: 'offline',
               prompt: 'consent',
             },
-            // @ts-ignore - La propiedad flowType no está en los tipos pero es necesaria
+            // @ts-expect-error - La propiedad flowType no está en los tipos pero es necesaria
             flowType: 'implicit',
           },
         });
@@ -143,5 +144,21 @@ export default function AuthPopup() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Componente principal que envuelve el contenido en un Suspense boundary
+export default function AuthPopup() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="p-8 bg-white rounded-lg shadow-md text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <h2 className="text-xl font-semibold text-gray-800">Cargando autenticación...</h2>
+        </div>
+      </div>
+    }>
+      <AuthPopupContent />
+    </Suspense>
   );
 }
