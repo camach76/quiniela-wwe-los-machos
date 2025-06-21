@@ -2,9 +2,8 @@
 
 import { Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { supabase } from "@/presentation/utils/supabase/client";
+import supabase from "@/presentation/utils/supabase/client";
 
-// Componente interno que usa useSearchParams
 function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -34,14 +33,17 @@ function AuthCallbackContent() {
       if (user) {
         // Asegurarnos de que el email no sea undefined
         if (!user.email) {
-          console.error('El usuario no tiene un email asociado');
-          return router.push('/auth/error?error=no_email');
+          console.error("El usuario no tiene un email asociado");
+          return router.push("/auth/error?error=no_email");
         }
-        
+
         await supabase.from("profiles").upsert({
           id: user.id,
           email: user.email,
-          username: user.user_metadata?.full_name || user.email.split("@")[0] || `user_${user.id.substring(0, 8)}`,
+          username:
+            user.user_metadata?.full_name ||
+            user.email.split("@")[0] ||
+            `user_${user.id.substring(0, 8)}`,
           role: "user",
           puntos: 0,
           aciertos: 0,
@@ -61,17 +63,20 @@ function AuthCallbackContent() {
   return <p className="text-center mt-10 text-gray-600">Iniciando sesión...</p>;
 }
 
-// Componente principal que envuelve el contenido en un Suspense boundary
 export default function AuthPage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="p-8 bg-white rounded-lg shadow-md text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-gray-800">Cargando autenticación...</h2>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen bg-gray-50">
+          <div className="p-8 bg-white rounded-lg shadow-md text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <h2 className="text-xl font-semibold text-gray-800">
+              Cargando autenticación...
+            </h2>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <AuthCallbackContent />
     </Suspense>
   );

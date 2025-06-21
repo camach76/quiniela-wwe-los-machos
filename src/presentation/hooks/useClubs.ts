@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Club } from '@/backend/core/domain/entities/clubEntity';
 import { ClubRepository } from '@/backend/core/domain/repositories/clubRepository';
 import { SupabaseClubRepository } from '@/backend/core/infra/repositories/SupabaseClubRepository';
-import { supabase } from '@/presentation/utils/supabase/client';
+import supabase from '@/presentation/utils/supabase/client';
 
 export function useClubs() {
   const [clubs, setClubs] = useState<Record<number, Club>>({});

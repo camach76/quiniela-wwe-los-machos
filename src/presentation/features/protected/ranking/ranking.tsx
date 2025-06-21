@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { FaFilter, FaSearch, FaTrophy } from "react-icons/fa";
 import { SupabaseUserRepository } from "@/backend/core/infra/repositories/SupabaseUserReposotory";
-import { supabase } from "@/presentation/utils/supabase/client";
+import supabase from "@/presentation/utils/supabase/client";
 
 type RankingJugador = {
   id: string;

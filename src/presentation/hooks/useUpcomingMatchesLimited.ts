@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getCachedData, setCachedData, clearCachedData } from '@/presentation/utils/storage';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { supabase } from '@/presentation/utils/supabase/client';
+import supabase from '@/presentation/utils/supabase/client';
 
 // Usamos una clave de caché única para este hook
 const UPCOMING_MATCHES_LIMITED_CACHE_KEY = 'quiniela-upcoming-matches-limited-cache';

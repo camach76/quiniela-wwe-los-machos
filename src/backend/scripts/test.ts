@@ -12,7 +12,7 @@ async function main() {
   const useCase = new GetRankingUsers(repo);
 
   try {
-    const result = await useCase.execute(); // sin userId
+    const result = await useCase.execute();
     console.log("Usuarios obtenidos:\n", result);
   } catch (error) {
     console.error("Error ejecutando el caso de uso:", error);

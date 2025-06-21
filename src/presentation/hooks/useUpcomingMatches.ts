@@ -3,7 +3,7 @@ import { getCachedData, setCachedData, clearCachedData } from '@/presentation/ut
 import { SupabaseMatchRepository } from '@/backend/core/infra/repositories/SupabaseMatchRepository';
 import { SupabaseClubRepository } from '@/backend/core/infra/repositories/SupabaseClubRepository';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { supabase } from '@/presentation/utils/supabase/client'; // Cliente de Supabase
+import supabase from '@/presentation/utils/supabase/client'; // Cliente de Supabase
 
 const UPCOMING_MATCHES_CACHE_KEY = 'quiniela-upcoming-matches-cache';
 
