@@ -4,6 +4,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState, ReactNode, useCallback } from 'react';
 import { getCodeVerifier, clearAuthData, supabase } from '@/presentation/utils/supabase/client';
+import { getRedirectPath } from '@/presentation/features/auth/services/userService';
 
 // Función para obtener el código de la URL
 const getCodeFromUrl = (): string | null => {
@@ -120,9 +121,39 @@ const AuthCallbackContent = (): ReactNode => {
       console.log('Usuario autenticado:', data.user?.email || 'No disponible');
       console.log('Sesión activa hasta:', data.session.expires_at ? new Date(data.session.expires_at * 1000).toLocaleString() : 'No disponible');
       
+      // Forzar una recarga de la sesión para asegurar que esté actualizada
+      const { data: { session: updatedSession } } = await supabase.auth.getSession();
+      console.log('Sesión actualizada después del intercambio:', updatedSession);
+      
+      if (!updatedSession) {
+        throw new Error('No se pudo obtener la sesión actualizada');
+      }
+      
+      // Obtener el perfil del usuario para verificar el rol
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', updatedSession.user.id)
+        .single();
+      
+      if (profileError) {
+        console.error('Error al obtener el perfil del usuario:', profileError);
+        throw profileError;
+      }
+      
+      console.log('Perfil del usuario obtenido:', profile);
+      
+      // Determinar la ruta de redirección basada en el rol
+      const redirectPath = profile?.role === 'admin' ? '/admin' : '/dashboard';
+      console.log('Redirigiendo a:', redirectPath);
+      
+      // Forzar una actualización de la sesión antes de redirigir
+      await supabase.auth.getSession();
+      
       // Redirigir a la página de destino después de un breve retraso
+      // Usar replace en lugar de href para evitar problemas con el historial
       setTimeout(() => {
-        window.location.href = next.startsWith("/") ? next : `/${next}`;
+        window.location.replace(redirectPath);
       }, 500);
       
       return { success: true };
@@ -157,9 +188,26 @@ const AuthCallbackContent = (): ReactNode => {
         const { data: { session: existingSession } } = await supabase.auth.getSession();
         if (existingSession) {
           console.log('Sesión existente encontrada, redirigiendo...');
+          console.log('Usuario autenticado:', existingSession.user?.email);
+          
+          // Determinar la ruta de redirección basada en el correo del usuario
+          let redirectPath = next;
+          
+          // Si el usuario es admin, redirigir a /admin
+          if (existingSession.user?.email === 'admin@quinela.com') {
+            console.log('Usuario administrador detectado, redirigiendo a /admin');
+            redirectPath = '/admin';
+          }
+          
+          console.log('Redirigiendo a:', redirectPath);
+          
+          // Forzar una actualización de la sesión
+          await supabase.auth.getSession();
+          
+          // Usar replace para evitar problemas con el historial
           setTimeout(() => {
-            window.location.href = next.startsWith("/") ? next : `/${next}`;
-          }, 500);
+            window.location.replace(redirectPath);
+          }, 100);
           return;
         }
 
@@ -171,8 +219,12 @@ const AuthCallbackContent = (): ReactNode => {
           const { data: { session } } = await supabase.auth.getSession();
           if (session) {
             console.log('Sesión encontrada después de la verificación, redirigiendo...');
+            // Forzar una actualización de la sesión
+            await supabase.auth.getSession();
+            const redirectPath = await getRedirectPath();
+            console.log('Redirigiendo a:', redirectPath);
             setTimeout(() => {
-              window.location.href = next.startsWith("/") ? next : `/${next}`;
+              window.location.replace(redirectPath);
             }, 500);
           } else {
             console.log('No hay sesión activa, redirigiendo al login...');
@@ -213,8 +265,12 @@ const AuthCallbackContent = (): ReactNode => {
           const { data: { session } } = await supabase.auth.getSession();
           if (session) {
             console.log('Se encontró una sesión activa después del fallo, redirigiendo...');
+            // Forzar una actualización de la sesión
+            await supabase.auth.getSession();
+            const redirectPath = await getRedirectPath();
+            console.log('Redirigiendo a:', redirectPath);
             setTimeout(() => {
-              window.location.href = next.startsWith("/") ? next : `/${next}`;
+              window.location.replace(redirectPath);
             }, 500);
             return;
           }
@@ -228,8 +284,9 @@ const AuthCallbackContent = (): ReactNode => {
           const { data: { session } } = await supabase.auth.getSession();
           if (session) {
             console.log('Se encontró una sesión activa a pesar del error, redirigiendo...');
+            const redirectPath = await getRedirectPath();
             setTimeout(() => {
-              window.location.href = next.startsWith("/") ? next : `/${next}`;
+              window.location.href = redirectPath;
             }, 500);
             return;
           }

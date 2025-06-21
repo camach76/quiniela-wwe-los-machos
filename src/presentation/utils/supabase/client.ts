@@ -75,35 +75,133 @@ const createSafeStorage = (): SafeStorage => {
 };
 
 // Configuración de autenticación
-const authOptions = {
+const authOptions: SupabaseClientOptions<"public"> = {
   auth: {
     autoRefreshToken: true,
+    detectSessionInUrl: false,
     persistSession: true,
-    detectSessionInUrl: true,
+    debug: false,
     flowType: 'pkce' as const,
     storage: createSafeStorage(),
-    // Usar la clave de almacenamiento específica del proyecto
-    storageKey: 'sb-pmjtdcskhdsqltzuxpts-auth-token',
-    // Habilitar el modo de depuración
-    debug: process.env.NODE_ENV === 'development',
-    // Configuración de cookies para el flujo PKCE
-    cookieOptions: {
-      name: 'sb-auth-token',
-      lifetime: 60 * 60 * 24 * 7, // 7 días
-      domain: '',
-      path: '/',
-      sameSite: 'lax' as const
-    }
+    storageKey: 'sb-pmjtdcskhdsqltzuxpts-auth-token'
+  },
+  global: {
+    headers: { 'x-application-name': 'quiniela-wwe' },
+  },
+  db: {
+    schema: 'public',
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
   }
 };
 
 // Crear el cliente de Supabase
 export const supabase = createSupabaseClient<Database>(supabaseUrl, supabaseAnonKey, authOptions);
 
-// Configurar el manejador de errores global
+// Configurar el manejador de errores global (solo errores)
 supabase.auth.onAuthStateChange((event, session) => {
-  console.log('Auth state changed:', event, session);
+  if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+    // Limpiar el almacenamiento local al cerrar sesión
+    localStorage.removeItem('sb-pmjtdcskhdsqltzuxpts-auth-token');
+    sessionStorage.removeItem('sb-pmjtdcskhdsqltzuxpts-auth-token');
+  }
 });
+
+// Solo ejecutar en el navegador
+if (typeof window !== 'undefined') {
+  // Definir tipos para los métodos de consola
+  type ConsoleMethod = 'log' | 'warn' | 'error' | 'info' | 'debug';
+  
+  // Guardar referencias originales de los métodos de consola
+  const originalConsole = {
+    log: console.log.bind(console),
+    warn: console.warn.bind(console),
+    error: console.error.bind(console),
+    info: console.info.bind(console),
+    debug: console.debug.bind(console)
+  };
+
+  // Función para determinar si un mensaje debe ser ignorado
+  const shouldIgnoreLog = (message: any): boolean => {
+    if (!message) return false;
+    const messageStr = String(message);
+    
+    const ignoredPatterns = [
+      // Mensajes de Supabase
+      '@supabase',
+      'GoTrueClient',
+      'getItem',
+      'sb-', // Prefijo común en claves de Supabase
+      
+      // Mensajes de carga de partidos
+      'Iniciando carga',
+      'Usando datos en caché',
+      
+      // Errores de recursos no encontrados
+      'favicon.ico',
+      '404',
+      'Failed to load',
+      
+      // Logs de autenticación
+      'getCodeVerifier',
+      'No encontrado',
+      
+      // Logs de imágenes
+      '.svg',
+      '.png',
+      '.jpg',
+      '.jpeg',
+      '.gif',
+      'upload.wikimedia.org',
+      
+      // Logs de estado
+      'Usuario autenticado',
+      'Perfil obtenido',
+      'Acceso de administrador',
+      'Iniciando sesión',
+      'Sesión iniciada',
+      'Redirigiendo',
+      'Cargando',
+      'Obteniendo',
+      'Actualizando',
+      'Eliminando',
+      'Guardando'
+    ];
+    
+    return ignoredPatterns.some(pattern => 
+      messageStr.toLowerCase().includes(pattern.toLowerCase())
+    );
+  };
+  
+  // Aplicar filtros a todos los métodos de consola
+  (['log', 'warn', 'error', 'info', 'debug'] as ConsoleMethod[]).forEach(level => {
+    console[level] = (...args: any[]) => {
+      if (!shouldIgnoreLog(args[0])) {
+        originalConsole[level](...args);
+      }
+    };
+  });
+
+  // Manejar errores de recursos no encontrados
+  window.addEventListener('error', (event) => {
+    const errorMessage = event.message || '';
+    if (errorMessage.includes('favicon.ico') || 
+        errorMessage.includes('Failed to load') ||
+        errorMessage.includes('404')) {
+      event.preventDefault();
+    }
+  });
+  
+  // Manejar promesas no manejadas
+  window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason && shouldIgnoreLog(event.reason.message || event.reason)) {
+      event.preventDefault();
+    }
+  });
+}
 
 // Función para obtener el code_verifier del almacenamiento
 export const getCodeVerifier = (): string | null => {

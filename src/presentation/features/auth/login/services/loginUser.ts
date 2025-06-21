@@ -20,5 +20,9 @@ export async function loginUser(email: string, password: string, rememberMe: boo
     document.cookie = `sb-auth-token=${data.session.access_token}; expires=${expiresAt.toUTCString()}; path=/; samesite=lax${process.env.NODE_ENV === 'production' ? '; secure' : ''}`;
   }
 
-  return data.user;
+  // Devolver tanto el usuario como el email para facilitar la redirección
+  return {
+    user: data.user,
+    email: data.user?.email || email // Usar el email del usuario o el proporcionado si no está disponible
+  };
 }
