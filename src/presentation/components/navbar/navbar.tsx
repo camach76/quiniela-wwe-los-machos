@@ -33,9 +33,17 @@ export const Navbar = ({
   const shouldShowNotifications = false;
 
   return (
-    <nav className={`bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-10 flex items-center justify-between px-4 lg:px-6 py-3 ${className}`}>
+    <nav className={`bg-white/80 backdrop-blur-md shadow-sm sticky top-0 left-0 right-0 z-50 flex items-center justify-between px-4 lg:px-6 py-3 w-full ${className}`}>
+      {/* Menú móvil - Botón de hamburguesa */}
+      <div className="md:hidden">
+        <button className="p-1 text-gray-600 hover:text-gray-900">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+          </svg>
+        </button>
+      </div>
       {/* Logo */}
-      <div className="flex items-center">
+      <div className="flex items-center flex-1 md:flex-none justify-center md:justify-start">
         <Link href="/dashboard" className="flex items-center gap-2">
           <div className="relative w-8 h-8 md:w-10 md:h-10">
             <Image 

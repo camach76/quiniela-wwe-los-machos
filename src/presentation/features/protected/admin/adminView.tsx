@@ -129,103 +129,96 @@ export default function AdminView() {
     );
   }
 
+  const headerAction = (
+    <div className="flex space-x-2">
+      <button
+        onClick={() => setStatus('scheduled')}
+        className={`px-3 py-1.5 text-sm rounded-md ${
+          status === 'scheduled' 
+            ? 'bg-blue-600 text-white' 
+            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+        }`}
+      >
+        Próximos
+      </button>
+      <button
+        onClick={() => setStatus('completed')}
+        className={`px-3 py-1.5 text-sm rounded-md ${
+          status === 'completed' 
+            ? 'bg-green-600 text-white' 
+            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+        }`}
+      >
+        Completados
+      </button>
+      <button
+        onClick={() => setStatus('all')}
+        className={`px-3 py-1.5 text-sm rounded-md ${
+          status === 'all' 
+            ? 'bg-purple-600 text-white' 
+            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+        }`}
+      >
+        Todos
+      </button>
+      <button
+        onClick={refreshMatches}
+        className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        disabled={matchesLoading}
+      >
+        {matchesLoading ? 'Actualizando...' : 'Actualizar'}
+      </button>
+    </div>
+  );
+
+  const pageTitle = status === 'scheduled' 
+    ? 'Próximos Partidos' 
+    : status === 'completed' 
+      ? 'Partidos Completados' 
+      : 'Todos los Partidos';
+
   return (
-    <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Administración de Partidos</h1>
-          <div className="flex space-x-2">
-            <button
-              onClick={() => setStatus('scheduled')}
-              className={`px-4 py-2 text-sm rounded-md ${
-                status === 'scheduled' 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              Próximos
-            </button>
-            <button
-              onClick={() => setStatus('completed')}
-              className={`px-4 py-2 text-sm rounded-md ${
-                status === 'completed' 
-                  ? 'bg-green-600 text-white' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              Completados
-            </button>
-            <button
-              onClick={() => setStatus('all')}
-              className={`px-4 py-2 text-sm rounded-md ${
-                status === 'all' 
-                  ? 'bg-purple-600 text-white' 
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              Todos
-            </button>
-          </div>
+    <AdminLayout title={pageTitle} headerAction={headerAction}>
+      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+        <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+          <h3 className="text-lg leading-6 font-medium text-gray-900">
+            {pageTitle}
+          </h3>
+          <p className="mt-1 max-w-2xl text-sm text-gray-500">
+            {filteredMatches().length} partidos encontrados
+          </p>
         </div>
         
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="p-4 border-b border-gray-200 bg-gray-50">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-800">
-                  {status === 'scheduled' 
-                    ? 'Próximos Partidos' 
-                    : status === 'completed' 
-                      ? 'Partidos Completados' 
-                      : 'Todos los Partidos'}
-                </h2>
-                <p className="text-sm text-gray-500">
-                  {filteredMatches().length} partidos encontrados
-                </p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={refreshMatches}
-                  className="px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  disabled={matchesLoading}
-                >
-                  {matchesLoading ? 'Actualizando...' : 'Actualizar'}
-                </button>
-              </div>
+        <div className="bg-white">
+          {matchesLoading ? (
+            <div className="flex justify-center items-center p-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
             </div>
-          </div>
-          
-          <div className="divide-y divide-gray-200">
-            {matchesLoading ? (
-              <div className="flex justify-center items-center p-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-              </div>
-            ) : filteredMatches().length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                {status === 'scheduled' 
+          ) : filteredMatches().length === 0 ? (
+            <div className="p-12 text-center text-gray-500">
+              {status === 'scheduled' 
+                ? 'No hay partidos programados' 
+                : status === 'completed' 
+                  ? 'No hay partidos completados' 
+                  : 'No hay partidos disponibles'}
+            </div>
+          ) : (
+            <MatchList
+              matches={filteredMatches()}
+              onEdit={(match) => setEditingMatch(match)}
+              onReset={handleResetResult}
+              onToggleComplete={toggleMatchCompletion}
+              isLoading={matchesLoading}
+              isSubmitting={isSubmitting}
+              emptyMessage={
+                status === 'scheduled' 
                   ? 'No hay partidos programados' 
                   : status === 'completed' 
                     ? 'No hay partidos completados' 
-                    : 'No hay partidos disponibles'}
-              </div>
-            ) : (
-              <MatchList
-                matches={filteredMatches()}
-                onEdit={(match) => setEditingMatch(match)}
-                onReset={handleResetResult}
-                onToggleComplete={toggleMatchCompletion}
-                isLoading={matchesLoading}
-                isSubmitting={isSubmitting}
-                emptyMessage={
-                  status === 'scheduled' 
-                    ? 'No hay partidos programados' 
-                    : status === 'completed' 
-                      ? 'No hay partidos completados' 
-                      : 'No hay partidos disponibles'
-                }
-              />
-            )}
-          </div>
+                    : 'No hay partidos disponibles'
+              }
+            />
+          )}
         </div>
       </div>
 
