@@ -10,8 +10,17 @@ export function useRegister() {
   const usecase = new RegisterUser(new SupabaseAuthRepository());
 
   return useMutation({
-    mutationFn: ({ email, password }: { email: string; password: string }) =>
-      usecase.execute(email, password),
+    mutationFn: ({
+      company,
+      name,
+      email,
+      password,
+    }: {
+      company: string;
+      name: string;
+      email: string;
+      password: string;
+    }) => usecase.execute(name, email, password, company),
     onSuccess: () => {
       router.push("/login");
     },

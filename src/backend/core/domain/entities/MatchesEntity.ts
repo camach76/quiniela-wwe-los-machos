@@ -12,6 +12,8 @@ export interface Match {
   // Propiedades opcionales para compatibilidad
   clubAId?: number;
   clubBId?: number;
+  clubA?: { id: number; nombre: string; pais: string; logo_url: string } | null;
+  clubB?: { id: number; nombre: string; pais: string; logo_url: string } | null;
   resultadoA?: number | null;
   resultadoB?: number | null;
   isComplete?: boolean;

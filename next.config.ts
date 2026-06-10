@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "flagcdn.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "pmjtdcskhdsqltzuxpts.supabase.co",
         pathname: "/**",
       },

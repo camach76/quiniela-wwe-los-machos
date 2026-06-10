@@ -1,12 +1,15 @@
 "use client";
 
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useEffect, useState } from "react";
+import {
+  clearSupabaseSession,
+  isInvalidRefreshTokenError,
+  supabase,
+} from '@/presentation/utils/supabase/client'
 
 export function useUserSession() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClientComponentClient();
 
   useEffect(() => {
     const getSession = async () => {
@@ -14,6 +17,12 @@ export function useUserSession() {
         const { data: { session } } = await supabase.auth.getSession();
         setUser(session?.user || null);
       } catch (error) {
+        if (isInvalidRefreshTokenError(error)) {
+          await clearSupabaseSession();
+          setUser(null);
+          return;
+        }
+
         console.error("Error fetching session:", error);
       } finally {
         setLoading(false);

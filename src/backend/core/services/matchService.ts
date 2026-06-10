@@ -4,11 +4,11 @@ import supabase from "@/presentation/utils/supabase/client";
 export const matchService = {
   async getManyByIds(ids: number[]): Promise<Match[]> {
     const { data, error } = await supabase
-      .from("match")
+      .from("matches")
       .select("*")
       .in("id", ids);
 
     if (error) throw new Error(error.message);
-    return data ?? [];
+    return (data ?? []) as any;
   },
 };

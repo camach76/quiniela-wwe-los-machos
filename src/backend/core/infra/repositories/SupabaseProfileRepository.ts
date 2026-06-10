@@ -26,6 +26,7 @@ export class SupabaseProfileRepository implements ProfileRepository {
       .from('profiles')
       .update({
         username: profileData.username,
+        company: profileData.company,
         full_name: profileData.full_name,
         phone: profileData.phone,
         location: profileData.location,
@@ -59,6 +60,7 @@ export class SupabaseProfileRepository implements ProfileRepository {
       .insert({
         username: profileData.username,
         email: profileData.email,
+        company: profileData.company,
         full_name: profileData.full_name,
         phone: profileData.phone,
         location: profileData.location,
@@ -92,6 +94,7 @@ export class SupabaseProfileRepository implements ProfileRepository {
       id: data.id,
       username: data.username,
       email: data.email,
+      company: data.company || null,
       full_name: data.full_name || null,
       avatar_url: data.avatar_url || null,
       phone: data.phone || null,

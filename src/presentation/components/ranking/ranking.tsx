@@ -1,7 +1,7 @@
 // src/presentation/components/ranking/ranking.tsx
 import React, { useEffect, useState } from 'react';
+import { supabase } from '@/presentation/utils/supabase/client'
 import { FaTrophy } from 'react-icons/fa';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { toast } from 'react-hot-toast';
 import { useUserSession } from '@/presentation/hooks/useUserSession';
 
@@ -15,7 +15,6 @@ export const Ranking: React.FC = () => {
   const [topJugadores, setTopJugadores] = useState<JugadorRanking[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useUserSession();
-  const supabase = createClientComponentClient();
 
   useEffect(() => {
     const fetchRanking = async () => {
@@ -28,8 +27,8 @@ export const Ranking: React.FC = () => {
       try {
         setLoading(true);
         const { data, error } = await supabase
-          .from('ranking')
-          .select('*')
+          .from('profiles')
+          .select('id, username, puntos')
           .order('puntos', { ascending: false })
           .limit(5);
 
@@ -37,7 +36,7 @@ export const Ranking: React.FC = () => {
           throw error;
         }
 
-        setTopJugadores(data || []);
+        setTopJugadores((data || []).map((j: any) => ({ id: j.id, nombre: j.username, puntos: j.puntos || 0 })));
       } catch (error) {
         console.error('Error al cargar el ranking:', error);
         toast.error('Error al cargar el ranking');
@@ -47,7 +46,7 @@ export const Ranking: React.FC = () => {
     };
 
     fetchRanking();
-  }, [user, supabase]);
+  }, [user]);
 
   if (loading) {
     return (

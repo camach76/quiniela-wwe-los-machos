@@ -1,13 +1,8 @@
 import { Bet } from "../../domain/entities/betEntity";
+import { supabase } from '@/presentation/utils/supabase/client'
 import { BetRepository } from "../../domain/repositories/BetRepository";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 export class SupabaseBetRepository implements BetRepository {
-  private supabase: any;
-
-  constructor() {
-    this.supabase = createClientComponentClient();
-  }
 
   async create(
     input: Omit<Bet, "id" | "createdAt" | "updatedAt" | "puntosObtenidos">,
@@ -20,7 +15,7 @@ export class SupabaseBetRepository implements BetRepository {
       puntos_obtenidos: 0,
     };
 
-    const { data, error } = await this.supabase
+    const { data, error } = await supabase
       .from("bets")
       .insert([betData])
       .select("*")
@@ -34,9 +29,9 @@ export class SupabaseBetRepository implements BetRepository {
       matchId: data.match_id,
       prediccionA: data.prediccion_a,
       prediccionB: data.prediccion_b,
-      puntosObtenidos: data.puntos_obtenidos,
+      puntosObtenidos: data.puntos_obtenidos ?? 0,
       createdAt: data.created_at,
-      updatedAt: data.updated_at,
+      updatedAt: data.updated_at ?? '',
     };
   }
 
@@ -47,7 +42,7 @@ export class SupabaseBetRepository implements BetRepository {
       puntos_obtenidos: bet.puntosObtenidos,
     };
 
-    const { data, error } = await this.supabase
+    const { data, error } = await supabase
       .from("bets")
       .update(betData)
       .eq("id", bet.id)
@@ -62,14 +57,14 @@ export class SupabaseBetRepository implements BetRepository {
       matchId: data.match_id,
       prediccionA: data.prediccion_a,
       prediccionB: data.prediccion_b,
-      puntosObtenidos: data.puntos_obtenidos,
+      puntosObtenidos: data.puntos_obtenidos ?? 0,
       createdAt: data.created_at,
-      updatedAt: data.updated_at,
+      updatedAt: data.updated_at ?? '',
     };
   }
 
   async getById(betId: number): Promise<Bet | null> {
-    const { data, error } = await this.supabase
+    const { data, error } = await supabase
       .from("bets")
       .select("*")
       .eq("id", betId)
@@ -84,9 +79,9 @@ export class SupabaseBetRepository implements BetRepository {
       matchId: data.match_id,
       prediccionA: data.prediccion_a,
       prediccionB: data.prediccion_b,
-      puntosObtenidos: data.puntos_obtenidos,
+      puntosObtenidos: data.puntos_obtenidos ?? 0,
       createdAt: data.created_at,
-      updatedAt: data.updated_at,
+      updatedAt: data.updated_at ?? '',
     };
   }
 
@@ -101,7 +96,7 @@ export class SupabaseBetRepository implements BetRepository {
 
       console.log("🔌 Conectando a Supabase...");
 
-      const { data, error, status, statusText } = await this.supabase
+      const { data, error, status, statusText } = await supabase
         .from("bets")
         .select(`*`)
         .eq("user_id", userId);
@@ -114,7 +109,6 @@ export class SupabaseBetRepository implements BetRepository {
           code: error.code,
           details: error.details,
           hint: error.hint,
-          status: error.status,
         });
         throw error;
       }
@@ -127,9 +121,9 @@ export class SupabaseBetRepository implements BetRepository {
         matchId: bet.match_id,
         prediccionA: bet.prediccion_a,
         prediccionB: bet.prediccion_b,
-        puntosObtenidos: bet.puntos_obtenidos,
+        puntosObtenidos: bet.puntos_obtenidos ?? 0,
         createdAt: bet.created_at,
-        updatedAt: bet.updated_at,
+        updatedAt: bet.updated_at ?? '',
       }));
     } catch (error: unknown) {
       console.error("❌ Error en getByUser:", error);
@@ -149,7 +143,7 @@ export class SupabaseBetRepository implements BetRepository {
     userId: string,
   ): Promise<Bet | null> {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await supabase
         .from("bets")
         .select("*")
         .eq("match_id", matchId)
@@ -171,9 +165,9 @@ export class SupabaseBetRepository implements BetRepository {
         matchId: data.match_id,
         prediccionA: data.prediccion_a,
         prediccionB: data.prediccion_b,
-        puntosObtenidos: data.puntos_obtenidos,
+        puntosObtenidos: data.puntos_obtenidos ?? 0,
         createdAt: data.created_at,
-        updatedAt: data.updated_at,
+        updatedAt: data.updated_at ?? '',
       };
     } catch (error) {
       console.error("Error en getByMatchAndUser:", error);

@@ -1,8 +1,8 @@
 'use client';
 
 import { Suspense, useEffect } from 'react';
+import { supabase } from '@/presentation/utils/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 // Componente interno que usa useSearchParams
 function AuthCallbackContent() {
@@ -33,7 +33,6 @@ function AuthCallbackContent() {
         }
         
         console.log('Código de autenticación encontrado en la URL');
-        const supabase = createClientComponentClient();
         
         // Intercambiar el código por una sesión
         const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);

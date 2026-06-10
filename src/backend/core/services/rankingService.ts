@@ -1,14 +1,13 @@
 import { GetRankingUsers } from "../usecases/GetRankingUsers";
+import { supabase } from '@/presentation/utils/supabase/client'
 import { SupabaseUserRepository } from "../infra/repositories/SupabaseUserReposotory";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 
 export class RankingService {
   private getRankingUseCase: GetRankingUsers;
   private supabase: any;
 
   constructor() {
-    this.supabase = createClientComponentClient();
-    const userRepo = new SupabaseUserRepository(this.supabase);
+    const userRepo = new SupabaseUserRepository(supabase);
     this.getRankingUseCase = new GetRankingUsers(userRepo);
   }
 

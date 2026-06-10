@@ -2,35 +2,23 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useUserSession } from "@/presentation/hooks/useUserSession";
-import { FaBell, FaSignOutAlt } from "react-icons/fa";
+import { useProfile } from "@/presentation/hooks/useProfile";
+import { FaSignOutAlt, FaShieldAlt } from "react-icons/fa";
 import { useLogout } from "@/presentation/features/auth/logout/hooks/useLogout";
-import { useState } from "react";
 
 interface NavbarProps {
   appName?: string;
   logoUrl?: string;
-  showNotifications?: boolean;
   className?: string;
 }
 
 export const Navbar = ({
-  appName = "Quiniela Los Machos",
+  appName = "Quiniela Consult-Us",
   logoUrl = "/images/logo.png",
-  showNotifications = true, // Este prop se mantiene por compatibilidad
   className = "",
 }: NavbarProps) => {
-  const { user } = useUserSession();
+  const { profile } = useProfile();
   const { mutate: logout } = useLogout();
-  const [userName, setUserName] = useState("Usuario");
-
-  // Obtener el nombre de usuario del email si está disponible
-  if (user?.email && userName === "Usuario") {
-    setUserName(user.email.split('@')[0]);
-  }
-  
-  // Deshabilitar notificaciones temporalmente
-  const shouldShowNotifications = false;
 
   return (
     <nav className={`bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-10 flex items-center justify-between px-4 lg:px-6 py-3 ${className}`}>
@@ -65,27 +53,18 @@ export const Navbar = ({
 
       {/* Controles de usuario */}
       <div className="flex items-center gap-3 md:gap-4">
-        {shouldShowNotifications && (
-          <button 
-            className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
-            aria-label="Notificaciones"
+        {profile?.role === "admin" && (
+          <Link
+            href="/admin"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-lg text-xs font-medium transition-colors"
+            title="Panel de administración"
           >
-            <FaBell className="text-lg md:text-xl" />
-          </button>
+            <FaShieldAlt className="text-xs" />
+            <span className="hidden sm:inline">Admin</span>
+          </Link>
         )}
-        
-        {shouldShowNotifications && <div className="h-6 w-px bg-gray-200"></div>}
-        
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium text-sm md:text-base">
-            {userName.charAt(0).toUpperCase()}
-          </div>
-          <span className="hidden md:inline text-sm font-medium text-gray-700">
-            {userName}
-          </span>
-        </div>
-        
-        <button 
+
+        <button
           onClick={() => logout()}
           className="p-2 text-gray-600 hover:text-red-600 transition-colors"
           title="Cerrar sesión"

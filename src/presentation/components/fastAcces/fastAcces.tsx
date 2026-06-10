@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { FaFutbol, FaTable, FaUser, FaBell } from 'react-icons/fa';
+import { FaFutbol, FaTable } from 'react-icons/fa';
 
 interface AccesoRapido {
   icono: React.ReactNode;
@@ -33,20 +33,6 @@ export const AccesosRapidos: React.FC = () => {
       ruta: '/resultados',
       color: 'from-yellow-100 to-yellow-50' 
     },
-    {
-      icono: <FaUser className="text-purple-500" />,
-      titulo: 'Mi Perfil',
-      descripcion: 'Administra tu cuenta',
-      ruta: '/perfil',
-      color: 'from-purple-100 to-purple-50'
-    }, 
-    {
-      icono: <FaBell className="text-red-500" />,
-      titulo: 'Notificaciones',
-      descripcion: 'Mantente actualizado',
-      ruta: '/notificaciones',
-      color: 'from-red-100 to-red-50'
-    }
   ];
 
   return (

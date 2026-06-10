@@ -5,6 +5,6 @@ export const clubService = {
   async getAll(): Promise<Club[]> {
     const { data, error } = await supabase.from("clubs").select("*");
     if (error) throw new Error(error.message);
-    return data ?? [];
+    return (data ?? []).map(c => ({ id: String(c.id), nombre: c.nombre, logo: c.logo_url, pais: c.pais }));
   },
 };

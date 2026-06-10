@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { loginUser } from "../services/loginUser";
 
 type LoginCredentials = {
@@ -11,15 +11,17 @@ type LoginCredentials = {
 };
 
 export function useLogin() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") ?? "/dashboard";
+  const redirect =
+    searchParams.get("redirect") ??
+    searchParams.get("redirectedFrom") ??
+    "/dashboard";
 
   return useMutation({
     mutationFn: ({ email, password, rememberMe = false }: LoginCredentials) =>
       loginUser(email, password, rememberMe),
     onSuccess: () => {
-      router.push(redirect);
+      window.location.assign(redirect);
     },
     onError: (error) => {
       console.error("Login error:", error.message);

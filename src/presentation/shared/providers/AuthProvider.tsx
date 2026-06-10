@@ -3,7 +3,11 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/presentation/utils/supabase/client';
+import {
+  clearSupabaseSession,
+  isInvalidRefreshTokenError,
+  supabase,
+} from '@/presentation/utils/supabase/client';
 
 type AuthContextType = {
   user: User | null;
@@ -42,10 +46,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Cargar la sesión inicial
   useEffect(() => {
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setSession(session);
-        setUser(session.user);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session ?? null);
+        setUser(session?.user ?? null);
+      } catch (error) {
+        if (isInvalidRefreshTokenError(error)) {
+          await clearSupabaseSession();
+          setSession(null);
+          setUser(null);
+          return;
+        }
+
+        console.error('Error getting session:', error);
       }
     };
 

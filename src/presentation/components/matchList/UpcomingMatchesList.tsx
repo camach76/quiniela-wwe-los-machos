@@ -58,12 +58,10 @@ export const UpcomingMatchesList: React.FC<UpcomingMatchesListProps> = ({
             local={{
               nombre: match.clubA.nombre,
               logo: match.clubA.logo_url,
-              fondo: match.clubA.fondo_url
             }}
             visitante={{
               nombre: match.clubB.nombre,
               logo: match.clubB.logo_url,
-              fondo: match.clubB.fondo_url
             }}
             fecha={match.fecha}
             torneo={showDate ? 'Próximo partido' : undefined}

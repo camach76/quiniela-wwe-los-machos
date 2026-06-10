@@ -1,14 +1,24 @@
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { AuthRepository } from "@/backend/core/domain/repositories/AuthRepository";
+import { supabase } from '@/presentation/utils/supabase/client'
 import { UserEntity } from "@/backend/core/domain/entities/UserEntity";
 
 export class SupabaseAuthRepository implements AuthRepository {
-  async register(email: string, password: string): Promise<UserEntity> {
-    const supabase = createClientComponentClient();
+  async register(
+    name: string,
+    email: string,
+    password: string,
+    company: string,
+  ): Promise<UserEntity> {
 
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          username: name,
+          company,
+        },
+      },
     });
 
     if (error || !data.user) {
@@ -21,7 +31,7 @@ export class SupabaseAuthRepository implements AuthRepository {
     return new UserEntity(
       id,
       email,
-      username,
+      name || username,
       0, // puntos
       0, // aciertos
       0, // total_apostados

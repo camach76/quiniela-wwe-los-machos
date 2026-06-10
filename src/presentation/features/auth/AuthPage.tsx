@@ -21,7 +21,7 @@ export default function AuthPage({ initialView = "login" }: { initialView?: "log
         >
           <Image
             src="/images/logo.png"
-            alt="Logo Mundial de Clubes"
+            alt="Logo Quiniela Consult-Us"
             width={220}
             height={220}
             className="rounded-xl drop-shadow-xl animate-fade-in"
@@ -51,7 +51,7 @@ export default function AuthPage({ initialView = "login" }: { initialView?: "log
             ) : (
               <>
                 <h2 className="text-2xl font-bold text-blue-700 mb-2 text-center">Crear Cuenta</h2>
-                <p className="text-center text-gray-500 mb-6">Regístrate para participar en la quinela</p>
+                <p className="text-center text-gray-500 mb-6">Regístrate para participar en la Quiniela Consult-Us</p>
                 <RegisterForm />
                 <p className="text-center text-gray-600 mt-6">
                   ¿Ya tienes cuenta?{' '}

@@ -1,14 +1,12 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from '@/presentation/utils/supabase/client'
 import { SupabaseMatchRepository } from "@/backend/core/infra/repositories/SupabaseMatchRepository";
 import { SupabaseBetRepository } from "@/backend/core/infra/repositories/SupabaseBetRepository";
 import { Bet } from "@/backend/core/domain/entities/betEntity";
-import { Club } from "@/types/partidos";
-import { clubService } from "@/backend/core/services/clubService";
 import { ApuestaForm } from "@/presentation/components/quiniela/quinelaApuesta/apuestaForm";
-import { format, isToday, isTomorrow, isYesterday, isThisWeek, isSameDay } from 'date-fns';
+import { format, isToday, isTomorrow, isYesterday, isSameDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 // Función auxiliar para formatear fechas con manejo de errores
@@ -49,8 +47,6 @@ export default function QuinelaPage() {
   const [loading, setLoading] = useState(true);
   const [selectedMatch, setSelectedMatch] = useState<PartidoConClubes | null>(null);
   const [selectedDay, setSelectedDay] = useState<number>(0); // 0=hoy, 1=mañana, 2=pasado
-
-  const supabase = createClientComponentClient();
 
   // Obtener fechas para los filtros
   const filterDates = useMemo(() => {
@@ -93,10 +89,10 @@ export default function QuinelaPage() {
           startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay() + 1); // Lunes de esta semana
           
           if (matchDate >= startOfWeek) {
-            dateLabel = format(matchDate, 'EEEE');
+            dateLabel = format(matchDate, 'EEEE', { locale: es });
             dateLabel = dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1);
           } else {
-            dateLabel = format(matchDate, 'EEEE d MMMM');
+            dateLabel = format(matchDate, 'EEEE d MMMM', { locale: es });
             dateLabel = dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1);
           }
         }
@@ -137,7 +133,7 @@ export default function QuinelaPage() {
   const getDayLabel = (date: Date) => {
     if (isToday(date)) return 'Hoy';
     if (isTomorrow(date)) return 'Mañana';
-    const dayName = format(date, 'EEEE');
+    const dayName = format(date, 'EEEE', { locale: es });
     return dayName.charAt(0).toUpperCase() + dayName.slice(1);
   };
 
@@ -158,39 +154,25 @@ export default function QuinelaPage() {
         const matchRepo = new SupabaseMatchRepository();
         const betRepo = new SupabaseBetRepository();
 
-        const [upcoming, userBets, allClubs] = await Promise.all([
+        const [upcoming, userBets] = await Promise.all([
           matchRepo.getUpcoming(),
           betRepo.getByUser(user.id),
-          clubService.getAll(),
         ]);
 
-        const clubsMap = allClubs.reduce<Record<string, Club>>(
-          (acc, club) => {
-            acc[club.id] = club;
-            return acc;
+        const partidos: PartidoConClubes[] = upcoming.map((match) => ({
+          id: match.id.toString(),
+          fecha: match.fecha,
+          club_a: {
+            nombre: match.clubA?.nombre ?? "Desconocido",
+            logo: match.clubA?.logo_url ?? "",
           },
-          {}
-        );
-
-        const partidos: PartidoConClubes[] = upcoming.map((match) => {
-          const clubA = clubsMap[match.club_a_id.toString()];
-          const clubB = clubsMap[match.club_b_id.toString()];
-
-          return {
-            id: match.id.toString(),
-            fecha: match.fecha,
-            club_a: {
-              nombre: clubA?.nombre ?? "Desconocido",
-              logo: clubA?.logo ?? "",
-            },
-            club_b: {
-              nombre: clubB?.nombre ?? "Desconocido",
-              logo: clubB?.logo ?? "",
-            },
-            goles_local: match.resultado_a,
-            goles_visitante: match.resultado_b,
-          };
-        });
+          club_b: {
+            nombre: match.clubB?.nombre ?? "Desconocido",
+            logo: match.clubB?.logo_url ?? "",
+          },
+          goles_local: match.resultado_a,
+          goles_visitante: match.resultado_b,
+        }));
 
         setMatches(partidos);
         setBets(userBets);

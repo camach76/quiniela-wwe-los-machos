@@ -279,7 +279,7 @@ export default function Perfil() {
               />
             </div>
             <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">
-              Quinela Mundial de Clubes
+              Quiniela Consult-Us
             </span>
           </Link>
         </div>

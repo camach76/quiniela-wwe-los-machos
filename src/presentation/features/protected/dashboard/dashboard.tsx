@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useUserSession } from "@/presentation/hooks/useUserSession";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-import { toast } from "react-hot-toast";
+import { useState } from "react";
+import { useProfile } from "@/presentation/hooks/useProfile";
 import { Estadisticas } from "@/presentation/components/estadisticas/estadisticas";
 import { MinRanking } from "@/presentation/components/ranking/min-ranking";
 import { AccesosRapidos } from "@/presentation/components/fastAcces/fastAcces";
@@ -12,18 +10,8 @@ import { MatchListComplete } from "@/presentation/components/matchListComplete/m
 import { UpcomingMatchesList } from "@/presentation/components/matchList/UpcomingMatchesList";
 
 export default function Dashboard() {
-  const { user } = useUserSession();
+  const { profile } = useProfile();
   const [activeTab, setActiveTab] = useState<"proximos" | "completados">("proximos");
-  ;
-  // El componente MinRanking maneja su propio estado
-
-  // Estadísticas del usuario
-  const estadisticas = {
-    puntuacion: user?.puntos || 0,
-    aciertos: user?.aciertos || 0,
-    totalPronosticos: user?.total_apostados || 0,
-    precision: user?.precision || 0
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-100">
@@ -31,10 +19,12 @@ export default function Dashboard() {
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Columna izquierda - Estadísticas y accesos rápidos */}
           <div className="w-full lg:w-1/4 space-y-6">
-            <Estadisticas 
-              puntuacion={estadisticas.puntuacion}
-              aciertos={estadisticas.aciertos}
-              totalPronosticos={estadisticas.totalPronosticos}
+            <Estadisticas
+              puntuacion={profile?.puntos ?? 0}
+              aciertos={profile?.aciertos ?? 0}
+              totalPronosticos={profile?.total_apostados ?? 0}
+              precision={profile?.precision ?? 0}
+              racha={profile?.racha ?? 0}
             />
             <AccesosRapidos />
           </div>

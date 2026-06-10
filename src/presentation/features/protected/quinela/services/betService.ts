@@ -1,4 +1,4 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { supabase } from '@/presentation/utils/supabase/client'
 
 export interface Bet {
   id?: number;
@@ -12,10 +12,9 @@ export interface Bet {
 }
 
 export class BetService {
-  private supabase = createClientComponentClient();
 
   async getBetByMatchAndUser(matchId: number, userId: string): Promise<Bet | null> {
-    const { data, error } = await this.supabase
+    const { data, error } = await supabase
       .from('bets')
       .select('*')
       .eq('match_id', matchId)
@@ -27,11 +26,11 @@ export class BetService {
       throw new Error('Error al cargar la apuesta');
     }
 
-    return data || null;
+    return data as Bet | null;
   }
 
   async createBet(bet: Omit<Bet, 'id' | 'puntos' | 'created_at' | 'updated_at'>): Promise<Bet> {
-    const { data, error } = await this.supabase
+    const { data, error } = await supabase
       .from('bets')
       .insert([{
         ...bet,
@@ -45,11 +44,11 @@ export class BetService {
       throw new Error('Error al guardar la apuesta');
     }
 
-    return data;
+    return data as Bet;
   }
 
   async updateBet(betId: number, updates: Partial<Bet>): Promise<Bet> {
-    const { data, error } = await this.supabase
+    const { data, error } = await supabase
       .from('bets')
       .update({
         ...updates,
@@ -64,11 +63,11 @@ export class BetService {
       throw new Error('Error al actualizar la apuesta');
     }
 
-    return data;
+    return data as Bet;
   }
 
   async getByUser(userId: string): Promise<Bet[]> {
-    const { data, error } = await this.supabase
+    const { data, error } = await supabase
       .from('bets')
       .select('*')
       .eq('user_id', userId);
@@ -78,7 +77,7 @@ export class BetService {
       throw new Error('Error al cargar las apuestas');
     }
 
-    return data || [];
+    return (data || []) as Bet[];
   }
 }
 

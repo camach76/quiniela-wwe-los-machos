@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { supabase } from '@/presentation/utils/supabase/client'
 import { getCachedData, setCachedData, clearCachedData } from '@/presentation/utils/storage';
 
 interface JugadorRanking {
@@ -21,7 +21,6 @@ export const useRanking = (limit: number = 5) => {
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const supabase = createClientComponentClient();
 
   const fetchRanking = useCallback(async () => {
     try {

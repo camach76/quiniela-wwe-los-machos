@@ -3,14 +3,7 @@
 import type React from "react";
 import { useState, useEffect } from "react";
 import { useLogin } from "../hooks/useLogin";
-import { useGoogleLogin } from "../hooks/useGoogleLogin";
-import {
-  FaEnvelope,
-  FaLock,
-  FaGoogle,
-  FaApple,
-  FaFacebook,
-} from "react-icons/fa";
+import { FaEnvelope, FaLock } from "react-icons/fa";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -21,7 +14,6 @@ export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const { signInWithGoogle } = useGoogleLogin();
 
   // Cargar credenciales guardadas al montar el componente
   useEffect(() => {
@@ -61,14 +53,14 @@ export default function LoginForm() {
             <div className="relative w-20 h-20 mb-3">
               <Image
                 src="/images/logo.png"
-                alt="Mundial de Clubes"
+                alt="Quiniela Consult-Us"
                 fill
                 className="object-contain rounded-2xl"
                 priority
               />
             </div>
             <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-500 bg-clip-text text-transparent">
-              Mundial de Clubes
+              Quiniela Consult-Us
             </h2>
             <p className="text-gray-500 text-sm mt-1">
               Inicia sesión para participar
@@ -184,28 +176,6 @@ export default function LoginForm() {
               {isPending ? "Iniciando sesión..." : "Iniciar Sesión"}
             </button>
 
-            {/* Divider */}
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">
-                  O continúa con
-                </span>
-              </div>
-            </div>
-
-            {/* Social Login */}
-            <div className="grid grid-cols-1 gap-3">
-              <button
-                type="button"
-                onClick={() => signInWithGoogle()}
-                className="inline-flex justify-center items-center py-2.5 border border-gray-300 rounded-xl bg-white hover:bg-gray-50 transition-colors"
-              >
-                <FaGoogle className="text-red-500" />
-              </button>
-            </div>
           </form>
 
           {/* Register Link */}

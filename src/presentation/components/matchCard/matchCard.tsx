@@ -4,7 +4,7 @@ import { TeamLogo } from '../TeamLogo';
 interface Equipo {
   nombre: string;
   logo: string;
-  fondo: string;
+  fondo?: string;
 }
 
 interface MatchCardProps {

@@ -12,10 +12,7 @@
     "@ant-design/cssinjs": "^1.23.0",
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
-    "@prisma/client": "^6.9.0",
     "@radix-ui/react-slot": "^1.2.3",
-    "@supabase/auth-helpers-nextjs": "^0.10.0",
-    "@supabase/auth-helpers-shared": "^0.7.0",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.50.0",
     "@tailwindcss/postcss": "^4.1.10",
@@ -45,7 +42,6 @@
     "eslint": "^9",
     "eslint-config-next": "15.3.3",
     "postcss": "^8.5.5",
-    "prisma": "^6.9.0",
     "supabase": "^2.24.3",
     "tailwindcss": "^4.1.10",
     "typescript": "^5"

@@ -1,83 +1,57 @@
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr'
 
-// Configuración de Supabase
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey)
+
+function removeAuthCookies() {
+  if (typeof document === 'undefined') return
+
+  const cookies = document.cookie.split(';')
+
+  cookies.forEach((cookie) => {
+    const [rawName] = cookie.split('=')
+    const name = rawName?.trim()
+
+    if (!name) return
+
+    if (name === 'sb-auth-token' || name.startsWith('sb-')) {
+      document.cookie = `${name}=; Max-Age=0; path=/; samesite=lax`
+    }
+  })
 }
 
-// Configuración básica de Supabase
-export const supabase = createSupabaseClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-    flowType: 'pkce',
-    // Usar localStorage para mantener la sesión
-    storage: {
-      getItem: (key) => {
-        if (typeof window === 'undefined') return null;
-        return localStorage.getItem(key);
-      },
-      setItem: (key, value) => {
-        if (typeof window === 'undefined') return;
-        localStorage.setItem(key, value);
-      },
-      removeItem: (key) => {
-        if (typeof window === 'undefined') return;
-        localStorage.removeItem(key);
-      },
-    },
-  },
-});
+function removeStoredAuthKeys() {
+  if (typeof window === 'undefined') return
 
-// Función para limpiar completamente la sesión
+  const authKeys = Object.keys(window.localStorage).filter((key) =>
+    key.includes('-auth-token') || key.includes('supabase.auth.token')
+  )
+
+  authKeys.forEach((key) => window.localStorage.removeItem(key))
+}
+
+export function isInvalidRefreshTokenError(error: unknown) {
+  if (!(error instanceof Error)) return false
+
+  return (
+    error.message.includes('Invalid Refresh Token') ||
+    error.message.includes('refresh_token_not_found')
+  )
+}
+
 export const clearSupabaseSession = async () => {
   try {
-    console.log('[Supabase] Limpiando sesión...');
-    
-    // 1. Cerrar sesión en Supabase
-    const { error: signOutError } = await supabase.auth.signOut();
-    
-    if (signOutError) {
-      console.error('[Supabase] Error al cerrar sesión:', signOutError);
-    } else {
-      console.log('[Supabase] Sesión cerrada correctamente');
-    }
-    
-    // 2. Limpiar cookies manualmente
-    if (typeof document !== 'undefined') {
-      document.cookie.split(';').forEach(cookie => {
-        const [name] = cookie.trim().split('=');
-        if (name.includes('sb-') || name.includes('supabase-')) {
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-        }
-      });
-    }
-    
-    // 3. Limpiar almacenamiento local
-    if (typeof window !== 'undefined') {
-      Object.keys(localStorage).forEach(key => {
-        if (key.includes('sb-') || key.includes('supabase-')) {
-          localStorage.removeItem(key);
-        }
-      });
-      
-      Object.keys(sessionStorage).forEach(key => {
-        if (key.includes('sb-') || key.includes('supabase-')) {
-          sessionStorage.removeItem(key);
-        }
-      });
-    }
-    
-    console.log('[Supabase] Sesión limpiada completamente');
-    return true;
+    const { error } = await supabase.auth.signOut({ scope: 'local' })
+    if (error) console.error('[Supabase] Error al cerrar sesión:', error)
   } catch (error) {
-    console.error('[Supabase] Error al limpiar la sesión:', error);
-    return false;
+    console.error('[Supabase] Error al limpiar la sesión:', error)
   }
-};
 
-export default supabase;
+  removeAuthCookies()
+  removeStoredAuthKeys()
+  return true
+}
+
+export default supabase

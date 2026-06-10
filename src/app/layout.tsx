@@ -23,8 +23,8 @@ const quicksand = Quicksand({
 });
 
 export const metadata: Metadata = {
-  title: "Quinela los machos",
-  description: "Craedo por fLeonel",
+  title: "Quiniela Consult-Us",
+  description: "Quiniela del Mundial FIFA 2026",
 };
 
 export default function RootLayout({
@@ -33,8 +33,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full">
-      <body className={`${geistSans.variable} ${geistMono.variable} ${quicksand.variable} font-sans antialiased`}>
+    <html lang="en" className="h-full" suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} ${quicksand.variable} font-sans antialiased`}
+        suppressHydrationWarning
+      >
         <QueryProvider>
           <AuthProvider>
             {children}

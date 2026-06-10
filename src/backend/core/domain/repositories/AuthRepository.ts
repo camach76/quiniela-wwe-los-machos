@@ -1,5 +1,10 @@
 import { UserEntity } from "@/backend/core/domain/entities/UserEntity";
 
 export interface AuthRepository {
-  register(email: string, password: string): Promise<UserEntity>;
+  register(
+    name: string,
+    email: string,
+    password: string,
+    company: string,
+  ): Promise<UserEntity>;
 }
