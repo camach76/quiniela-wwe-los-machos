@@ -9,6 +9,7 @@ interface Club {
   id: number;
   nombre: string;
   logo_url: string;
+  pais: string;
 }
 
 export interface Match {
@@ -42,8 +43,8 @@ const toMatch = (raw: any): Match => {
     resultadoA: raw.resultado_a ?? raw.resultadoA ?? null,
     resultadoB: raw.resultado_b ?? raw.resultadoB ?? null,
     isComplete: true,
-    clubA: clubA ? { id: clubA.id, nombre: clubA.nombre, logo_url: clubA.logo_url } : null,
-    clubB: clubB ? { id: clubB.id, nombre: clubB.nombre, logo_url: clubB.logo_url } : null,
+    clubA: clubA ? { id: clubA.id, nombre: clubA.nombre, logo_url: clubA.logo_url, pais: clubA.pais ?? '' } : null,
+    clubB: clubB ? { id: clubB.id, nombre: clubB.nombre, logo_url: clubB.logo_url, pais: clubB.pais ?? '' } : null,
     club_a_id: raw.club_a_id ?? raw.clubAId,
     club_b_id: raw.club_b_id ?? raw.clubBId,
     resultado_a: raw.resultado_a ?? raw.resultadoA,

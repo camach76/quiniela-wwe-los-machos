@@ -48,24 +48,24 @@ export function MatchCard({ match, userId, onBetSaved }: MatchCardProps) {
         <div className="text-center flex-1">
           <div className="font-semibold">{match.clubA?.nombre || 'Equipo Local'}</div>
           <div className="relative h-16 w-16 mx-auto my-2">
-            <Image 
-              src={match.clubA?.logo_url || '/images/default-logo.png'} 
-              alt={match.clubA?.nombre || 'Local'} 
+            <Image
+              src={match.clubA?.logo_url || '/images/default-logo.png'}
+              alt={match.clubA?.nombre || 'Local'}
               fill
               className="object-contain"
               sizes="4rem"
             />
           </div>
         </div>
-        
+
         <div className="text-2xl font-bold mx-4">VS</div>
-        
+
         <div className="text-center flex-1">
           <div className="font-semibold">{match.clubB?.nombre || 'Equipo Visitante'}</div>
           <div className="relative h-16 w-16 mx-auto my-2">
-            <Image 
-              src={match.clubB?.logo_url || '/images/default-logo.png'} 
-              alt={match.clubB?.nombre || 'Visitante'} 
+            <Image
+              src={match.clubB?.logo_url || '/images/default-logo.png'}
+              alt={match.clubB?.nombre || 'Visitante'}
               fill
               className="object-contain"
               sizes="4rem"
