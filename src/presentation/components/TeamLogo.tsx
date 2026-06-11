@@ -36,6 +36,7 @@ export const TeamLogo = ({ name = 'Team', logoUrl, size = 48, className = '' }: 
         height={size}
         className="rounded-full object-cover"
         onError={() => setError(true)}
+        unoptimized
       />
     </div>
   );
