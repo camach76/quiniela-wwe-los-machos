@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { useUpcomingMatchesLimited } from '@/presentation/hooks/useUpcomingMatchesLimited';
 import { MatchCard } from '../matchCard/matchCard';
 import { toast } from 'react-hot-toast';
@@ -58,10 +58,12 @@ export const UpcomingMatchesList: React.FC<UpcomingMatchesListProps> = ({
             local={{
               nombre: match.clubA.nombre,
               logo: match.clubA.logo_url,
+              fondo: '/images/bgFifa.jpg',
             }}
             visitante={{
               nombre: match.clubB.nombre,
               logo: match.clubB.logo_url,
+              fondo: '/images/bgFifa.jpg',
             }}
             fecha={match.fecha}
             torneo={showDate ? 'Próximo partido' : undefined}
