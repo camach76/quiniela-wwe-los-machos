@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { FaFutbol, FaTable } from 'react-icons/fa';
+import { FaFutbol, FaTable, FaEye } from 'react-icons/fa';
 
 interface AccesoRapido {
   icono: React.ReactNode;
@@ -31,7 +31,14 @@ export const AccesosRapidos: React.FC = () => {
       titulo: 'Partidos',
       descripcion: 'Consulta los partidos',
       ruta: '/resultados',
-      color: 'from-yellow-100 to-yellow-50' 
+      color: 'from-yellow-100 to-yellow-50'
+    },
+    {
+      icono: <FaEye className="text-purple-500" />,
+      titulo: 'Apuestas del Día',
+      descripcion: 'Ver apuestas por fecha',
+      ruta: '/apuestas',
+      color: 'from-purple-100 to-purple-50'
     },
   ];
 
