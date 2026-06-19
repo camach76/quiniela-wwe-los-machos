@@ -5,6 +5,7 @@ import { supabase } from '@/presentation/utils/supabase/client';
 
 export interface BetRow {
   id: number;
+  userId: string;
   username: string;
   prediccionA: number;
   prediccionB: number;
@@ -14,6 +15,7 @@ export interface BetRow {
 export interface MatchWithBets {
   matchId: number;
   fecha: string;
+  hasStarted: boolean;
   resultadoA: number | null;
   resultadoB: number | null;
   clubA: { nombre: string; logo_url: string };
@@ -32,6 +34,7 @@ const isSameLocalDate = (isoDate: string, target: Date): boolean => {
 
 export const useBetsByDate = (selectedDate: Date) => {
   const [allData, setAllData] = useState<MatchWithBets[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,10 +43,14 @@ export const useBetsByDate = (selectedDate: Date) => {
       setLoading(true);
       setError(null);
       try {
+        const { data: { user } } = await supabase.auth.getUser();
+        setCurrentUserId(user?.id ?? null);
+
         const { data, error: sbError } = await supabase
           .from('bets')
           .select(`
             id,
+            user_id,
             prediccion_a,
             prediccion_b,
             puntos_obtenidos,
@@ -62,8 +69,8 @@ export const useBetsByDate = (selectedDate: Date) => {
           console.error('[useBetsByDate] Supabase error:', sbError);
           throw sbError;
         }
-        console.log('[useBetsByDate] rows fetched:', data?.length);
 
+        const now = new Date();
         const map = new Map<number, MatchWithBets>();
 
         for (const row of data ?? []) {
@@ -75,6 +82,7 @@ export const useBetsByDate = (selectedDate: Date) => {
             map.set(match.id, {
               matchId: match.id,
               fecha: match.fecha,
+              hasStarted: new Date(match.fecha) <= now,
               resultadoA: match.resultado_a,
               resultadoB: match.resultado_b,
               clubA: match.club_a ?? { nombre: '', logo_url: '' },
@@ -85,6 +93,7 @@ export const useBetsByDate = (selectedDate: Date) => {
 
           map.get(match.id)!.bets.push({
             id: row.id,
+            userId: row.user_id,
             username: profile.username,
             prediccionA: row.prediccion_a,
             prediccionB: row.prediccion_b,
@@ -120,5 +129,5 @@ export const useBetsByDate = (selectedDate: Date) => {
     [allData, selectedDate]
   );
 
-  return { matchesForDate, loading, error };
+  return { matchesForDate, currentUserId, loading, error };
 };

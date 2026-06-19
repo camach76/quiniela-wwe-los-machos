@@ -10,8 +10,18 @@ const pointsBadge = (pts: number) => {
   return 'bg-gray-100 text-gray-500';
 };
 
-const MatchBetsCard = ({ match }: { match: MatchWithBets }) => {
+const MatchBetsCard = ({
+  match,
+  currentUserId,
+}: {
+  match: MatchWithBets;
+  currentUserId: string | null;
+}) => {
   const hasResult = match.resultadoA !== null && match.resultadoB !== null;
+  const visibleBets = match.hasStarted
+    ? match.bets
+    : match.bets.filter((b) => b.userId === currentUserId);
+  const hiddenCount = match.hasStarted ? 0 : match.bets.length - visibleBets.length;
 
   return (
     <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-md border border-white/20 overflow-hidden">
@@ -64,7 +74,7 @@ const MatchBetsCard = ({ match }: { match: MatchWithBets }) => {
             </tr>
           </thead>
           <tbody>
-            {match.bets.map((bet, i) => (
+            {visibleBets.map((bet, i) => (
               <tr
                 key={bet.id}
                 className={`border-b border-gray-100 last:border-0 ${
@@ -90,13 +100,22 @@ const MatchBetsCard = ({ match }: { match: MatchWithBets }) => {
           </tbody>
         </table>
       </div>
+
+      {hiddenCount > 0 && (
+        <div className="px-4 py-3 bg-amber-50 border-t border-amber-100 flex items-center gap-2 text-amber-700 text-xs">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          Las apuestas de los otros {hiddenCount} jugador{hiddenCount !== 1 ? 'es' : ''} se revelan cuando empiece el partido.
+        </div>
+      )}
     </div>
   );
 };
 
 export default function Apuestas() {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const { matchesForDate, loading, error } = useBetsByDate(selectedDate);
+  const { matchesForDate, currentUserId, loading, error } = useBetsByDate(selectedDate);
 
   const changeDate = (days: number) => {
     const d = new Date(selectedDate);
@@ -180,7 +199,7 @@ export default function Apuestas() {
       {matchesForDate.length > 0 ? (
         <div className="space-y-6">
           {matchesForDate.map((match) => (
-            <MatchBetsCard key={match.matchId} match={match} />
+            <MatchBetsCard key={match.matchId} match={match} currentUserId={currentUserId} />
           ))}
         </div>
       ) : (
