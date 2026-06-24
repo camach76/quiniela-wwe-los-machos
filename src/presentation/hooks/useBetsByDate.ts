@@ -23,13 +23,26 @@ export interface MatchWithBets {
   bets: BetRow[];
 }
 
-const isSameLocalDate = (isoDate: string, target: Date): boolean => {
-  const d = new Date(isoDate);
-  return (
-    d.getFullYear() === target.getFullYear() &&
-    d.getMonth() === target.getMonth() &&
-    d.getDate() === target.getDate()
-  );
+const GT_TZ = 'America/Guatemala';
+
+const getGTDateParts = (d: Date) => {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: GT_TZ,
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+  }).formatToParts(d);
+  return {
+    year:  Number(parts.find(p => p.type === 'year')?.value),
+    month: Number(parts.find(p => p.type === 'month')?.value),
+    day:   Number(parts.find(p => p.type === 'day')?.value),
+  };
+};
+
+const isSameGTDate = (isoDate: string, target: Date): boolean => {
+  const a = getGTDateParts(new Date(isoDate));
+  const b = getGTDateParts(target);
+  return a.year === b.year && a.month === b.month && a.day === b.day;
 };
 
 export const useBetsByDate = (selectedDate: Date) => {
@@ -125,7 +138,7 @@ export const useBetsByDate = (selectedDate: Date) => {
   }, []);
 
   const matchesForDate = useMemo(
-    () => allData.filter((m) => isSameLocalDate(m.fecha, selectedDate)),
+    () => allData.filter((m) => isSameGTDate(m.fecha, selectedDate)),
     [allData, selectedDate]
   );
 

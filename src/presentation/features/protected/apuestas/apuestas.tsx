@@ -124,6 +124,7 @@ export default function Apuestas() {
   };
 
   const formattedDate = selectedDate.toLocaleDateString('es-ES', {
+    timeZone: 'America/Guatemala',
     weekday: 'long',
     day: 'numeric',
     month: 'long',
